@@ -1,0 +1,60 @@
+{
+  "name": "pdfgate",
+  "version": "1.0.2",
+  "description": "PDFGate API client",
+  "author": "PDFGate <support@pdfgate.com> (https://pdfgate.com/)",
+  "homepage": "https://pdfgate.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pdfgate/pdfgate-sdk-node.git"
+  },
+  "bugs": "https://github.com/pdfgate/pdfgate-sdk-node/issues",
+  "keywords": [
+    "pdfgate",
+    "pdf",
+    "pdf-api",
+    "html-to-pdf",
+    "html-to-pdf-api",
+    "pdf-generation",
+    "pdf-conversion",
+    "fillable-pdf",
+    "pdf-forms",
+    "pdf-form-fields",
+    "flatten-pdf",
+    "compress-pdf",
+    "watermark-pdf",
+    "protect-pdf",
+    "encrypt-pdf",
+    "node",
+    "nodejs",
+    "typescript"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "license": "MIT",
+
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3"
+  }
+}
