@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
     "target": "es2017",
-    "module": "commonjs",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": "./src",
-    "declaration": true,
   },
-  "exclude": ["node_modules", "test", "./dist/**/*"]
 }

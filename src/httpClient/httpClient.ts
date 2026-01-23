@@ -43,7 +43,7 @@ export class HttpClient {
       if (Buffer.isBuffer(value.data)) {
         chunks.push(
           Buffer.from(
-            `Content-Disposition: form-data; name="${key}"; filename="${key}"\r\n` +
+            `Content-Disposition: form-data; name="${key}"; filename="${value.name}"\r\n` +
               `Content-Type: ${this.findFileContentType(value.name)}\r\n\r\n`
           )
         );

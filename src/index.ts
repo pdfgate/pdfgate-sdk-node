@@ -12,7 +12,7 @@ import {
   ProtectPdfResponse,
   WatermarkPdfRequest,
   WatermarkPdfResponse,
-} from './types/types';
+} from './types/types.js';
 
 export default class PdfGate {
   private api: HttpClient;

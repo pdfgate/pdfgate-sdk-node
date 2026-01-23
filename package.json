@@ -1,6 +1,6 @@
 {
   "name": "pdfgate",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "PDFGate API client",
   "author": "PDFGate <support@pdfgate.com> (https://pdfgate.com/)",
   "homepage": "https://pdfgate.com",
@@ -29,20 +29,22 @@
     "nodejs",
     "typescript"
   ],
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE"],
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
   "license": "MIT",
-
   "scripts": {
-    "build": "tsc",
+    "clean": "rm -rf dist",
+    "build:esm": "tsc -p tsconfig.esm.json && echo '{\"type\":\"module\"}' > dist/esm/package.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "build:types": "tsc -p tsconfig.esm.json --emitDeclarationOnly",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ."

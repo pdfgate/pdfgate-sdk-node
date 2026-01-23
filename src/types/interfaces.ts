@@ -57,6 +57,8 @@ export interface GeneratePdfRequest {
   printBackground?: boolean;
   preSignedUrlExpiresIn?: number;
   userAgent?: string;
+  authentication?: PageAuthentication;
+  viewport?: Viewport;
 }
 
 export interface PdfPageMargin {
@@ -73,4 +75,14 @@ export interface ClickSelectorChainSetup {
 
 export interface ClickSelectorChain {
   selectors: string[];
+}
+
+export interface PageAuthentication {
+  username: string;
+  password: string;
+}
+
+export interface Viewport {
+  width: number;
+  height: number;
 }
