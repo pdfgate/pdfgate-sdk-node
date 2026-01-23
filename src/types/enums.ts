@@ -43,12 +43,10 @@ export enum PdfStandardFont {
   TimesBold = 'times-bold',
   TimesItalic = 'times-italic',
   TimesBoldItalic = 'times-bolditalic',
-
   Helvetica = 'helvetica',
   HelveticaBold = 'helvetica-bold',
   HelveticaOblique = 'helvetica-oblique',
   HelveticaBoldOblique = 'helvetica-boldoblique',
-
   Courier = 'courier',
   CourierBold = 'courier-bold',
   CourierOblique = 'courier-oblique',

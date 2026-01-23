@@ -1,6 +1,6 @@
 # PDFGate Node SDK
 
-Official Node.js client for the PDFGate API.
+Official Node.js client for the [PDFGate](https://pdfgate.com) API.
 
 PDFGate lets you generate, process, and secure PDFs via a simple API:
 - HTML or URL to PDF
@@ -17,8 +17,20 @@ PDFGate lets you generate, process, and secure PDFs via a simple API:
 
 ```bash
 npm install pdfgate
-or
+# or
 yarn add pdfgate
+```
+
+---
+
+## Sandbox / Production client
+
+```ts
+import PdfGate from 'pdfgate';
+
+const client = new PdfGate('live_xxxxxx'); // Use your production API key
+// const client = new PdfGate('test_xxxxxx'); // Use your sandbox API key
+
 ```
 
 ---
@@ -40,39 +52,53 @@ fs.writeFileSync('out.pdf', pdf);
 
 ---
 
-## Buffer vs JSON responses
+## Usage with CommonJS
 
-Most endpoints return **PDF bytes (`Buffer`) by default**.
+```js
+const PdfGate = require('pdfgate');
 
-If you want a **JSON document response** (with metadata and optional `fileUrl`), set:
-
-```ts
-jsonResponse: true
+const client = new PdfGate(process.env.PDFGATE_API_KEY);
 ```
 
-Example:
+---
+
+## Buffer vs JSON responses
+
+Most endpoints return **PDF bytes (`Buffer`) by default**. However, if you want a **JSON document response** (with optional `fileUrl`), use the following:
 
 ```ts
 const doc = await client.generatePdf({
   url: 'https://example.com',
   jsonResponse: true,
-  preSignedUrlExpiresIn: 3600,
+  preSignedUrlExpiresIn: 3600, // Use this to return fileUrl
 });
 
-console.log(doc.id, doc.fileUrl);
+console.log(doc);
 ```
 
 ---
 
 ## Examples
 
-### Generate PDF from URL or HTML
+### Generate PDF from URL
 
 ```ts
 const pdf = await client.generatePdf({
-  html: '<div><p>Hello World</p> <div><input type="text" name="textield"/></div></div>',
-  enableFormFields: true,
+  url: 'https://example.com/',
   scale: 1.3,
+});
+
+fs.writeFileSync('out.pdf', pdf);
+```
+
+---
+
+### Generate PDF from HTML with fillable fields
+
+```ts
+const pdf = await client.generatePdf({
+  html: '<div><p>Hello World</p> <div><input type="text" name="textfield"/></div></div>',
+  enableFormFields: true,
 });
 
 fs.writeFileSync('out.pdf', pdf);
@@ -188,17 +214,3 @@ const data = await client.extractPdfFormData({
 
 console.log(data);
 ```
-
----
-
-## Environment
-
-- Node.js ≥ 18
-- Works with both `require()` and `import`
-
----
-
-## Support
-
-📧 Email: support@pdfgate.com  
-📘 Docs: https://pdfgate.com/documentation
