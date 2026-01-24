@@ -1,6 +1,6 @@
 {
   "name": "pdfgate",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "PDFGate API client",
   "author": "PDFGate <support@pdfgate.com> (https://pdfgate.com/)",
   "homepage": "https://pdfgate.com",
@@ -31,7 +31,12 @@
   ],
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
-  "files": ["dist", "cjs.cjs", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "cjs.cjs",
+    "README.md",
+    "LICENSE"
+  ],
   "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
