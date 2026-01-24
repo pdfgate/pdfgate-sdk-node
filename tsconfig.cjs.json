@@ -5,5 +5,5 @@
     "moduleResolution": "Node",
     "outDir": "dist/cjs"
   },
-  "include": ["src/index.cjs.ts"]
+  "include": ["src/**/*.ts"]
 }

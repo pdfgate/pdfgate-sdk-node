@@ -1,6 +1,11 @@
-import { HttpClient } from './httpClient';
-import { GeneratePdfRequest, GetDocumentRequest, GetFileRequest, PdfGateDocument } from './types';
-import { PdfGateApiError } from './types/classes';
+import { HttpClient } from './httpClient/index.js';
+import {
+  GeneratePdfRequest,
+  GetDocumentRequest,
+  GetFileRequest,
+  PdfGateDocument,
+} from './types/index.js';
+import { PdfGateApiError } from './types/classes.js';
 import {
   CompressPdfRequest,
   CompressPdfResponse,
