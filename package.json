@@ -29,13 +29,15 @@
     "nodejs",
     "typescript"
   ],
-  "files": ["dist", "README.md", "LICENSE"],
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "files": ["dist", "cjs.cjs", "README.md", "LICENSE"],
   "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.cjs.js"
+      "require": "./cjs.cjs"
     }
   },
   "license": "MIT",
@@ -45,6 +47,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
     "build:types": "tsc -p tsconfig.esm.json --emitDeclarationOnly",
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "docs": "typedoc --out docs src/index.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ."
@@ -57,6 +60,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "^3.7.4",
+    "typedoc": "^0.28.16",
     "typescript": "^5.9.3"
   }
 }
