@@ -134,15 +134,12 @@ fs.writeFileSync('out.pdf', file);
 ### Flatten a PDF (make form fields non-editable)
 
 ```ts
-import fs from 'fs';
-
-const input = fs.readFileSync('toflatten.pdf');
-
-const out = await client.flattenPdf({
-  file: { name: 'toflatten.pdf', data: Buffer.from(input) },
+const doc = await client.flattenPdf({
+  documentId: 'DOCUMENT_ID',
+  jsonResponse: true,
 });
 
-fs.writeFileSync('out.pdf', out);
+console.log(doc);
 ```
 
 ---
@@ -175,9 +172,10 @@ const doc = await client.watermarkPdf({
   text: 'My watermark',
   rotate: 30,
   opacity: 0.3,
+  jsonResponse: true,
 });
 
-fs.writeFileSync('out.pdf', doc);
+console.log(doc);
 ```
 
 ---
@@ -185,12 +183,8 @@ fs.writeFileSync('out.pdf', doc);
 ### Protect (encrypt) a PDF
 
 ```ts
-import fs from 'fs';
-
-const input = fs.readFileSync('input.pdf');
-
 const doc = await client.protectPdf({
-  file: { name: 'input.pdf', data: Buffer.from(input) },
+  documentId: 'DOCUMENT_ID',
   algorithm: 'AES256',
   userPassword: 'user',
   ownerPassword: 'owner',
@@ -198,9 +192,10 @@ const doc = await client.protectPdf({
   disableCopy: true,
   disablePrint: true,
   encryptMetadata: true,
+  jsonResponse: true,
 });
 
-fs.writeFileSync('protected.pdf', doc);
+console.log(doc);
 ```
 
 ---

@@ -104,8 +104,7 @@ export default class PdfGate {
    *
    * **Endpoint:** `POST /forms/flatten`
    *
-   * Provide **either**:
-   * - `file` (upload a PDF), or
+   * Provide:
    * - `documentId` (reference an existing stored document).
    *
    * If `documentId` is provided, PDFGate creates a **new** flattened document (does not overwrite).
@@ -119,24 +118,23 @@ export default class PdfGate {
    * @see https://pdfgate.com/documentation
    *
    * @typeParam FlattenPdfRequest.
-   * @param params - Flatten options; includes `file` or `documentId`, optional `jsonResponse`, metadata, etc.
+   * @param params - Flatten options; includes `documentId`, optional `jsonResponse`, metadata, etc.
    * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
    */
   async flattenPdf<P extends FlattenPdfRequest>(params: P): Promise<FlattenPdfResponse<P>> {
-    const contentType = 'multipart/form-data';
     const timeout = 3 * 60 * 1000; // 3 minutes
     if (params.jsonResponse) {
       return this.api.post<PdfGateDocument>(
         '/forms/flatten',
         params,
-        contentType,
+        undefined,
         timeout
       ) as unknown as FlattenPdfResponse<P>;
     }
     return this.api.post<Buffer>(
       '/forms/flatten',
       params,
-      contentType,
+      undefined,
       timeout
     ) as unknown as FlattenPdfResponse<P>;
   }
@@ -146,8 +144,7 @@ export default class PdfGate {
    *
    * **Endpoint:** `POST /compress/pdf`
    *
-   * Provide **either**:
-   * - `file` (upload a PDF), or
+   * Provide:
    * - `documentId` (reference an existing stored document).
    *
    * Compression optimizes internal structures and stream compression without changing visual content.
@@ -161,24 +158,23 @@ export default class PdfGate {
    * @see https://pdfgate.com/documentation
    *
    * @typeParam CompressPdfRequest.
-   * @param params - Compress options; includes `file` or `documentId`, optional `linearize`, `jsonResponse`, metadata, etc.
+   * @param params - Compress options; includes `documentId`, optional `linearize`, `jsonResponse`, metadata, etc.
    * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
    */
   async compressPdf<P extends CompressPdfRequest>(params: P): Promise<CompressPdfResponse<P>> {
-    const contentType = 'multipart/form-data';
     const timeout = 3 * 60 * 1000; // 3 minutes
     if (params.jsonResponse) {
       return this.api.post<PdfGateDocument>(
         '/compress/pdf',
         params,
-        contentType,
+        undefined,
         timeout
       ) as unknown as CompressPdfResponse<P>;
     }
     return this.api.post<Buffer>(
       '/compress/pdf',
       params,
-      contentType,
+      undefined,
       timeout
     ) as unknown as CompressPdfResponse<P>;
   }
@@ -188,14 +184,14 @@ export default class PdfGate {
    *
    * **Endpoint:** `POST /watermark/pdf`
    *
-   * Provide **either**:
-   * - `file` (upload a PDF), or
+   * Provide:
    * - `documentId` (reference an existing stored document).
    *
    * Watermark configuration highlights:
    * - `type` is required: `"text"` or `"image"`.
    * - For text watermarks: `text` required when `type="text"`.
    * - For image watermarks: upload `watermark` image file (`.png`, `.jpg`, `.jpeg`).
+   * - This endpoint remains multipart because it can include image/font file uploads.
    * - Optional: `font` (standard PDF fonts), `fontFile` (`.ttf`/`.otf` overrides `font`),
    *   `fontSize`, `fontColor`, `opacity` (0..1), `xPosition`, `yPosition`, `imageWidth`, `imageHeight`, `rotate` (0..360).
    *
@@ -207,7 +203,7 @@ export default class PdfGate {
    * @see https://pdfgate.com/documentation
    *
    * @typeParam WatermarkPdfRequest.
-   * @param params - Watermark options; includes `file` or `documentId` plus watermark settings.
+   * @param params - Watermark options; includes `documentId` plus watermark settings.
    * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
    */
   async watermarkPdf<P extends WatermarkPdfRequest>(params: P): Promise<WatermarkPdfResponse<P>> {
@@ -234,8 +230,7 @@ export default class PdfGate {
    *
    * **Endpoint:** `POST /protect/pdf`
    *
-   * Provide **either**:
-   * - `file` (upload a PDF), or
+   * Provide:
    * - `documentId` (reference an existing stored document).
    *
    * Security options highlights:
@@ -255,24 +250,23 @@ export default class PdfGate {
    * @see https://pdfgate.com/documentation
    *
    * @typeParam ProtectPdfRequest.
-   * @param params - Protect options; includes `file` or `documentId`, encryption/restriction settings, etc.
+   * @param params - Protect options; includes `documentId`, encryption/restriction settings, etc.
    * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
    */
   async protectPdf<P extends ProtectPdfRequest>(params: P): Promise<ProtectPdfResponse<P>> {
-    const contentType = 'multipart/form-data';
     const timeout = 3 * 60 * 1000; // 3 minutes
     if (params.jsonResponse) {
       return this.api.post<PdfGateDocument>(
         '/protect/pdf',
         params,
-        contentType,
+        undefined,
         timeout
       ) as unknown as ProtectPdfResponse<P>;
     }
     return this.api.post<Buffer>(
       '/protect/pdf',
       params,
-      contentType,
+      undefined,
       timeout
     ) as unknown as ProtectPdfResponse<P>;
   }
@@ -282,8 +276,7 @@ export default class PdfGate {
    *
    * **Endpoint:** `POST /forms/extract-data`
    *
-   * Provide **either**:
-   * - `file` (upload a PDF), or
+   * Provide:
    * - `documentId` (reference an existing stored document).
    *
    * The response is a JSON object mapping form field names to their values.
@@ -291,12 +284,11 @@ export default class PdfGate {
    * @see https://pdfgate.com/documentation
    *
    * @typeParam ExtractPdfDataRequest.
-   * @param params - Extraction request; includes `file` or `documentId`.
+   * @param params - Extraction request; includes `documentId`.
    * @returns A plain JSON object containing extracted PDF form data.
    */
   extractPdfFormData(params: ExtractPdfDataRequest) {
-    const contentType = 'multipart/form-data';
-    return this.api.post<Record<string, any>>('/forms/extract-data', params, contentType);
+    return this.api.post<Record<string, any>>('/forms/extract-data', params);
   }
 
   /**
