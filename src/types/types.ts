@@ -3,26 +3,24 @@ import { PdfGateDocument } from './interfaces';
 
 export type ExtractPdfDataRequest = { documentId: string };
 
-export type GeneratePdfResponse<P> = P extends { jsonResponse: true } ? PdfGateDocument : Buffer;
+export type GeneratePdfResponse = PdfGateDocument;
 
 export type FlattenPdfRequest = {
   documentId: string;
-  jsonResponse?: boolean;
   preSignedUrlExpiresIn?: number;
   metadata?: object;
 };
 
-export type FlattenPdfResponse<P> = P extends { jsonResponse: true } ? PdfGateDocument : Buffer;
+export type FlattenPdfResponse = PdfGateDocument;
 
 export type CompressPdfRequest = {
   documentId: string;
-  jsonResponse?: boolean;
   linearize?: boolean;
   preSignedUrlExpiresIn?: number;
   metadata?: object;
 };
 
-export type CompressPdfResponse<P> = P extends { jsonResponse: true } ? PdfGateDocument : Buffer;
+export type CompressPdfResponse = PdfGateDocument;
 
 export type WatermarkPdfRequest = {
   documentId: string;
@@ -39,12 +37,11 @@ export type WatermarkPdfRequest = {
   imageWidth?: number;
   imageHeight?: number;
   rotate?: number;
-  jsonResponse?: boolean;
   preSignedUrlExpiresIn?: number;
   metadata?: object;
 };
 
-export type WatermarkPdfResponse<P> = P extends { jsonResponse: true } ? PdfGateDocument : Buffer;
+export type WatermarkPdfResponse = PdfGateDocument;
 
 export type ProtectPdfRequest = {
   documentId: string;
@@ -55,9 +52,8 @@ export type ProtectPdfRequest = {
   disableCopy?: boolean;
   disableEditing?: boolean;
   encryptMetadata?: boolean;
-  jsonResponse?: boolean;
   preSignedUrlExpiresIn?: number;
   metadata?: object;
 };
 
-export type ProtectPdfResponse<P> = P extends { jsonResponse: true } ? PdfGateDocument : Buffer;
+export type ProtectPdfResponse = PdfGateDocument;

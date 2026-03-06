@@ -47,7 +47,6 @@ export interface GeneratePdfRequest {
   clickSelector?: string;
   clickSelectorChainSetup?: ClickSelectorChainSetup;
   waitForNetworkIdle?: boolean;
-  jsonResponse?: boolean;
   grayscale?: boolean;
   enableFormFields?: boolean;
   delay?: number;

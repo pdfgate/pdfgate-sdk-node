@@ -39,15 +39,16 @@ const client = new PdfGate('live_xxxxxx'); // Use your production API key
 
 ```ts
 import PdfGate from 'pdfgate';
-import fs from 'fs';
 
 const client = new PdfGate(process.env.PDFGATE_API_KEY);
 
-const pdf = await client.generatePdf({
+const doc = await client.generatePdf({
   url: 'https://example.com',
 });
 
-fs.writeFileSync('out.pdf', pdf);
+const pdf = await client.getFile({
+  documentId: doc.id,
+});
 ```
 
 ---
@@ -62,14 +63,20 @@ const client = new PdfGate(process.env.PDFGATE_API_KEY);
 
 ---
 
-## Buffer vs JSON responses
+## JSON responses for processing endpoints
 
-Most endpoints return **PDF bytes (`Buffer`) by default**. However, if you want a **JSON document response** (with optional `fileUrl`), use the following:
+The following methods always return a JSON document response (`PdfGateDocument`):
+- `generatePdf`
+- `flattenPdf`
+- `compressPdf`
+- `watermarkPdf`
+- `protectPdf`
+
+This SDK always sends `jsonResponse: true` internally for these methods.
 
 ```ts
 const doc = await client.generatePdf({
   url: 'https://example.com',
-  jsonResponse: true,
   preSignedUrlExpiresIn: 3600, // Use this to return fileUrl
 });
 
@@ -83,12 +90,13 @@ console.log(doc);
 ### Generate PDF from URL
 
 ```ts
-const pdf = await client.generatePdf({
+const doc = await client.generatePdf({
   url: 'https://example.com/',
   scale: 1.3,
+  preSignedUrlExpiresIn: 3600,
 });
 
-fs.writeFileSync('out.pdf', pdf);
+console.log(doc.fileUrl);
 ```
 
 ---
@@ -96,12 +104,12 @@ fs.writeFileSync('out.pdf', pdf);
 ### Generate PDF from HTML with fillable fields
 
 ```ts
-const pdf = await client.generatePdf({
+const doc = await client.generatePdf({
   html: '<div><p>Hello World</p> <div><input type="text" name="textfield"/></div></div>',
   enableFormFields: true,
 });
 
-fs.writeFileSync('out.pdf', pdf);
+console.log(doc.id);
 ```
 
 ---
@@ -136,7 +144,6 @@ fs.writeFileSync('out.pdf', file);
 ```ts
 const doc = await client.flattenPdf({
   documentId: 'DOCUMENT_ID',
-  jsonResponse: true,
 });
 
 console.log(doc);
@@ -150,7 +157,6 @@ console.log(doc);
 const doc = await client.compressPdf({
   documentId: 'DOCUMENT_ID',
   linearize: false,
-  jsonResponse: true,
 });
 
 console.log(doc);
@@ -172,7 +178,6 @@ const doc = await client.watermarkPdf({
   text: 'My watermark',
   rotate: 30,
   opacity: 0.3,
-  jsonResponse: true,
 });
 
 console.log(doc);
@@ -192,7 +197,6 @@ const doc = await client.protectPdf({
   disableCopy: true,
   disablePrint: true,
   encryptMetadata: true,
-  jsonResponse: true,
 });
 
 console.log(doc);

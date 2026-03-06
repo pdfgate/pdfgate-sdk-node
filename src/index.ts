@@ -59,9 +59,9 @@ export default class PdfGate {
    * - `url` (render a public page), or
    * - `html` (render raw HTML).
    *
-   * By default the API returns a **raw PDF stream** (handled here as a `Buffer`).
-   * If `jsonResponse: true`, the API returns a **document JSON** object with metadata,
-   * including a temporary `fileUrl` (pre-signed URL) when enabled.
+   * This SDK always requests a JSON response from this endpoint and returns a
+   * **document JSON** object with metadata, including a temporary `fileUrl`
+   * (pre-signed URL) when enabled.
    *
    * Notes from the API docs:
    * - `preSignedUrlExpiresIn` is in **seconds** (min 60, max 86400).
@@ -73,30 +73,17 @@ export default class PdfGate {
    *
    * @see https://pdfgate.com/documentation
    *
-   * @typeParam GeneratePdfRequest.
    * @param params - Generation options; must include `url` or `html`.
-   * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
+   * @returns A `PdfGateDocument`.
    * @throws {PdfGateApiError} If neither `url` nor `html` is provided.
    */
-  async generatePdf<P extends GeneratePdfRequest>(params: P): Promise<GeneratePdfResponse<P>> {
+  async generatePdf(params: GeneratePdfRequest): Promise<GeneratePdfResponse> {
     if (!params.url && !params.html) {
       throw new PdfGateApiError("You must provide either a 'url' or 'html' parameter.");
     }
+    const payload = { ...params, jsonResponse: true };
     const timeout = 15 * 60 * 1000; // 15 minutes
-    if (params.jsonResponse) {
-      return this.api.post<PdfGateDocument>(
-        '/v1/generate/pdf',
-        params,
-        undefined,
-        timeout
-      ) as unknown as GeneratePdfResponse<P>;
-    }
-    return this.api.post<Buffer>(
-      '/v1/generate/pdf',
-      params,
-      undefined,
-      timeout
-    ) as unknown as GeneratePdfResponse<P>;
+    return this.api.post<PdfGateDocument>('/v1/generate/pdf', payload, undefined, timeout);
   }
 
   /**
@@ -108,35 +95,19 @@ export default class PdfGate {
    * - `documentId` (reference an existing stored document).
    *
    * If `documentId` is provided, PDFGate creates a **new** flattened document (does not overwrite).
-   * When `jsonResponse: true`, the response may include `derivedFrom` to indicate the original document ID.
-   *
-   * By default returns a raw PDF stream (handled here as `Buffer`).
-   * If `jsonResponse: true`, returns a JSON document object (`PdfGateDocument`) with metadata and `fileUrl`.
+   * This SDK always requests JSON and returns a `PdfGateDocument`.
    *
    * `preSignedUrlExpiresIn` is in **seconds** (min 60, max 86400).
    *
    * @see https://pdfgate.com/documentation
    *
-   * @typeParam FlattenPdfRequest.
-   * @param params - Flatten options; includes `documentId`, optional `jsonResponse`, metadata, etc.
-   * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
+   * @param params - Flatten options; includes `documentId`, optional metadata, etc.
+   * @returns A `PdfGateDocument`.
    */
-  async flattenPdf<P extends FlattenPdfRequest>(params: P): Promise<FlattenPdfResponse<P>> {
+  async flattenPdf(params: FlattenPdfRequest): Promise<FlattenPdfResponse> {
+    const payload = { ...params, jsonResponse: true };
     const timeout = 3 * 60 * 1000; // 3 minutes
-    if (params.jsonResponse) {
-      return this.api.post<PdfGateDocument>(
-        '/forms/flatten',
-        params,
-        undefined,
-        timeout
-      ) as unknown as FlattenPdfResponse<P>;
-    }
-    return this.api.post<Buffer>(
-      '/forms/flatten',
-      params,
-      undefined,
-      timeout
-    ) as unknown as FlattenPdfResponse<P>;
+    return this.api.post<PdfGateDocument>('/forms/flatten', payload, undefined, timeout);
   }
 
   /**
@@ -150,33 +121,19 @@ export default class PdfGate {
    * Compression optimizes internal structures and stream compression without changing visual content.
    * Optionally enable `linearize` to help the first page render sooner over the network.
    *
-   * By default returns a raw PDF stream (handled here as `Buffer`).
-   * If `jsonResponse: true`, returns a JSON document object (`PdfGateDocument`) with metadata and `fileUrl`.
+   * This SDK always requests JSON and returns a `PdfGateDocument`.
    *
    * `preSignedUrlExpiresIn` is in **seconds** (min 60, max 86400).
    *
    * @see https://pdfgate.com/documentation
    *
-   * @typeParam CompressPdfRequest.
-   * @param params - Compress options; includes `documentId`, optional `linearize`, `jsonResponse`, metadata, etc.
-   * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
+   * @param params - Compress options; includes `documentId`, optional `linearize`, metadata, etc.
+   * @returns A `PdfGateDocument`.
    */
-  async compressPdf<P extends CompressPdfRequest>(params: P): Promise<CompressPdfResponse<P>> {
+  async compressPdf(params: CompressPdfRequest): Promise<CompressPdfResponse> {
+    const payload = { ...params, jsonResponse: true };
     const timeout = 3 * 60 * 1000; // 3 minutes
-    if (params.jsonResponse) {
-      return this.api.post<PdfGateDocument>(
-        '/compress/pdf',
-        params,
-        undefined,
-        timeout
-      ) as unknown as CompressPdfResponse<P>;
-    }
-    return this.api.post<Buffer>(
-      '/compress/pdf',
-      params,
-      undefined,
-      timeout
-    ) as unknown as CompressPdfResponse<P>;
+    return this.api.post<PdfGateDocument>('/compress/pdf', payload, undefined, timeout);
   }
 
   /**
@@ -195,34 +152,20 @@ export default class PdfGate {
    * - Optional: `font` (standard PDF fonts), `fontFile` (`.ttf`/`.otf` overrides `font`),
    *   `fontSize`, `fontColor`, `opacity` (0..1), `xPosition`, `yPosition`, `imageWidth`, `imageHeight`, `rotate` (0..360).
    *
-   * By default returns a raw PDF stream (handled here as `Buffer`).
-   * If `jsonResponse: true`, returns a JSON document object (`PdfGateDocument`) with metadata and `fileUrl`.
+   * This SDK always requests JSON and returns a `PdfGateDocument`.
    *
    * `preSignedUrlExpiresIn` is in **seconds** (min 60, max 86400).
    *
    * @see https://pdfgate.com/documentation
    *
-   * @typeParam WatermarkPdfRequest.
    * @param params - Watermark options; includes `documentId` plus watermark settings.
-   * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
+   * @returns A `PdfGateDocument`.
    */
-  async watermarkPdf<P extends WatermarkPdfRequest>(params: P): Promise<WatermarkPdfResponse<P>> {
+  async watermarkPdf(params: WatermarkPdfRequest): Promise<WatermarkPdfResponse> {
     const contentType = 'multipart/form-data';
+    const payload = { ...params, jsonResponse: true };
     const timeout = 3 * 60 * 1000; // 3 minutes
-    if (params.jsonResponse) {
-      return this.api.post<PdfGateDocument>(
-        '/watermark/pdf',
-        params,
-        contentType,
-        timeout
-      ) as unknown as WatermarkPdfResponse<P>;
-    }
-    return this.api.post<Buffer>(
-      '/watermark/pdf',
-      params,
-      contentType,
-      timeout
-    ) as unknown as WatermarkPdfResponse<P>;
+    return this.api.post<PdfGateDocument>('/watermark/pdf', payload, contentType, timeout);
   }
 
   /**
@@ -242,33 +185,19 @@ export default class PdfGate {
    *
    * The operation produces a new protected file and does not alter the original.
    *
-   * By default returns a raw PDF stream (handled here as `Buffer`).
-   * If `jsonResponse: true`, returns a JSON document object (`PdfGateDocument`) with metadata and `fileUrl`.
+   * This SDK always requests JSON and returns a `PdfGateDocument`.
    *
    * `preSignedUrlExpiresIn` is in **seconds** (min 60, max 86400).
    *
    * @see https://pdfgate.com/documentation
    *
-   * @typeParam ProtectPdfRequest.
    * @param params - Protect options; includes `documentId`, encryption/restriction settings, etc.
-   * @returns A `Buffer` (PDF bytes) by default, or a `PdfGateDocument` when `jsonResponse: true`.
+   * @returns A `PdfGateDocument`.
    */
-  async protectPdf<P extends ProtectPdfRequest>(params: P): Promise<ProtectPdfResponse<P>> {
+  async protectPdf(params: ProtectPdfRequest): Promise<ProtectPdfResponse> {
+    const payload = { ...params, jsonResponse: true };
     const timeout = 3 * 60 * 1000; // 3 minutes
-    if (params.jsonResponse) {
-      return this.api.post<PdfGateDocument>(
-        '/protect/pdf',
-        params,
-        undefined,
-        timeout
-      ) as unknown as ProtectPdfResponse<P>;
-    }
-    return this.api.post<Buffer>(
-      '/protect/pdf',
-      params,
-      undefined,
-      timeout
-    ) as unknown as ProtectPdfResponse<P>;
+    return this.api.post<PdfGateDocument>('/protect/pdf', payload, undefined, timeout);
   }
 
   /**
