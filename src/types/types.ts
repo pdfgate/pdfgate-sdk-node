@@ -1,6 +1,14 @@
 import { PdfStandardFont } from './enums';
 import { PdfGateDocument } from './interfaces';
 
+/**
+ * A file payload sent to multipart endpoints.
+ */
+export type FileParam = {
+  name: string;
+  data: Buffer;
+};
+
 export type ExtractPdfDataRequest = { documentId: string };
 
 export type GeneratePdfResponse = PdfGateDocument;
@@ -24,8 +32,8 @@ export type CompressPdfResponse = PdfGateDocument;
 
 export type WatermarkPdfRequest = {
   documentId: string;
-  watermark?: { name: string; data: Buffer };
-  fontFile?: { name: string; data: Buffer };
+  watermark?: FileParam;
+  fontFile?: FileParam;
   type?: 'text' | 'image';
   text?: string;
   font?: PdfStandardFont;
