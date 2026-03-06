@@ -4,6 +4,7 @@ Official Node.js client for the [PDFGate](https://pdfgate.com) API.
 
 PDFGate lets you generate, process, and secure PDFs via a simple API:
 - HTML or URL to PDF
+- Upload a PDF to reference it in later operations
 - Fillable forms
 - Flatten, compress, watermark, protect PDFs
 - Extract PDF form data
@@ -67,6 +68,7 @@ const client = new PdfGate(process.env.PDFGATE_API_KEY);
 
 The following methods always return a JSON document response (`PdfGateDocument`):
 - `generatePdf`
+- `uploadFile`
 - `flattenPdf`
 - `compressPdf`
 - `watermarkPdf`
@@ -124,6 +126,33 @@ const doc = await client.getDocument({
 
 console.log(doc);
 ```
+
+---
+
+### Upload a PDF file for later operations
+
+```ts
+import fs from 'fs';
+
+const bytes = fs.readFileSync('document.pdf');
+
+const doc = await client.uploadFile({
+  file: { name: 'document.pdf', data: Buffer.from(bytes) },
+  preSignedUrlExpiresIn: 3600,
+});
+
+console.log(doc.id, doc.type); // type = "uploaded"
+```
+
+You can also upload from a public URL:
+
+```ts
+const doc = await client.uploadFile({
+  url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+});
+```
+
+When both `file` and `url` are provided, `file` is prioritized and the SDK sends multipart data.
 
 ---
 
@@ -212,4 +241,15 @@ const data = await client.extractPdfFormData({
 });
 
 console.log(data);
+```
+
+---
+
+## Acceptance tests
+
+The acceptance suite calls the real API and requires `PDFGATE_API_KEY`.
+If the env var is not set, acceptance tests are skipped with a clear message.
+
+```bash
+PDFGATE_API_KEY=test_xxxxx npm run test:acceptance
 ```

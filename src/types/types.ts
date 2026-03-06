@@ -13,6 +13,21 @@ export type ExtractPdfDataRequest = { documentId: string };
 
 export type GeneratePdfResponse = PdfGateDocument;
 
+/**
+ * Parameters for uploading a raw PDF file to PDFGate.
+ *
+ * When both `file` and `url` are provided, the SDK prioritizes `file`
+ * and sends the request as multipart/form-data.
+ */
+export type UploadFileRequest = {
+  file?: FileParam;
+  url?: string;
+  preSignedUrlExpiresIn?: number;
+  metadata?: object;
+};
+
+export type UploadFileResponse = PdfGateDocument;
+
 export type FlattenPdfRequest = {
   documentId: string;
   preSignedUrlExpiresIn?: number;

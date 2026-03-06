@@ -15,6 +15,8 @@ import {
   GeneratePdfResponse,
   ProtectPdfRequest,
   ProtectPdfResponse,
+  UploadFileRequest,
+  UploadFileResponse,
   WatermarkPdfRequest,
   WatermarkPdfResponse,
 } from './types/types.js';
@@ -134,6 +136,45 @@ export default class PdfGate {
     const payload = { ...params, jsonResponse: true };
     const timeout = 3 * 60 * 1000; // 3 minutes
     return this.api.post<PdfGateDocument>('/compress/pdf', payload, undefined, timeout);
+  }
+
+  /**
+   * Upload a raw PDF file so it can be referenced by other PDF operations.
+   *
+   * **Endpoint:** `POST /upload`
+   *
+   * Provide:
+   * - `file` (multipart upload), or
+   * - `url` (JSON body with a source URL).
+   *
+   * When both `file` and `url` are provided, `file` is prioritized and
+   * the request is sent as multipart/form-data.
+   *
+   * This SDK always requests JSON and returns a `PdfGateDocument`.
+   *
+   * Important: Accessing stored generated files requires enabling
+   * “Save files” in the PDFGate Dashboard settings (disabled by default).
+   *
+   * `preSignedUrlExpiresIn` is in **seconds** (min 60, max 86400).
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params - Upload options; includes `file` and/or `url`, optional metadata, etc.
+   * @returns A `PdfGateDocument`.
+   */
+  async uploadFile(params: UploadFileRequest): Promise<UploadFileResponse> {
+    const timeout = 3 * 60 * 1000; // 3 minutes
+    if (params.file) {
+      const payload: UploadFileRequest & { jsonResponse: true } = {
+        ...params,
+        jsonResponse: true,
+      };
+      delete payload.url;
+      return this.api.post<PdfGateDocument>('/upload', payload, 'multipart/form-data', timeout);
+    }
+
+    const payload = { ...params, jsonResponse: true };
+    return this.api.post<PdfGateDocument>('/upload', payload, undefined, timeout);
   }
 
   /**

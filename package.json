@@ -55,7 +55,8 @@
     "docs": "typedoc --out docs src/index.ts",
     "test:runtime": "npm run build && node --test test/runtime/**/*.test.js",
     "test:types": "tsc -p tsconfig.type-tests.json --noEmit",
-    "test": "npm run test:runtime && npm run test:types",
+    "test:acceptance": "npm run build && node --test test/acceptance/**/*.test.js",
+    "test": "npm run test:runtime && npm run test:types && npm run test:acceptance",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ."

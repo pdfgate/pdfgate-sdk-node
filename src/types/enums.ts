@@ -7,6 +7,7 @@ export enum DocumentStatus {
 
 export enum DocumentType {
   FROM_HTML = 'from_html',
+  UPLOADED = 'uploaded',
   FLATTENED = 'flattened',
   WATERMARKED = 'watermarked',
   ENCRYPTED = 'encrypted',
