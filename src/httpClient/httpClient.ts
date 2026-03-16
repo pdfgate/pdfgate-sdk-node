@@ -8,6 +8,7 @@ import { PdfGateApiError } from '../types/classes';
 export class HttpClient {
   config: HttpClientConfig;
   boundary: string = '----boundary';
+  errorBodyLimit = 2048;
 
   constructor(config: HttpClientConfig) {
     this.config = config;
@@ -155,23 +156,41 @@ export class HttpClient {
                 : this.parseJsonSafe(bufferData?.toString('utf8'));
               resolve(bufferData ? respData : ({} as T));
             } else {
-              const apiError = this.parseJsonSafe(bufferData?.toString('utf8'));
+              const responseText = bufferData?.toString('utf8') || '';
+              const truncatedBody = this.truncateErrorBody(responseText);
+              const apiError = this.parseJsonSafe(responseText);
               reject(
                 new PdfGateApiError(
-                  `HTTP Error: status [${response.statusCode}] - ${apiError?.message || response.statusMessage || 'Unknown error'}`
+                  `HTTP Error: status [${response.statusCode}] - ${apiError?.message || response.statusMessage || 'Unknown error'}`,
+                  {
+                    statusCode: response.statusCode,
+                    responseBody: truncatedBody,
+                    cause: apiError || response.statusMessage,
+                  }
                 )
               );
             }
           } catch (error) {
-            reject(error);
+            reject(
+              new PdfGateApiError('Failed to parse API response', {
+                cause: error,
+              })
+            );
           }
         });
       });
 
-      req.on('error', (err: any) => reject(err));
+      req.on('error', (err: any) =>
+        reject(
+          new PdfGateApiError('Request failed', {
+            cause: err,
+          })
+        )
+      );
       req.on('timeout', () => {
-        req.destroy(new PdfGateApiError('Request timeout'));
-        reject(new PdfGateApiError('Request timeout'));
+        const timeoutError = new PdfGateApiError('Request timeout');
+        req.destroy(timeoutError);
+        reject(timeoutError);
       });
 
       if (data) {
@@ -180,5 +199,15 @@ export class HttpClient {
 
       req.end();
     });
+  }
+
+  private truncateErrorBody(body?: string): string | undefined {
+    if (!body) {
+      return undefined;
+    }
+    if (body.length <= this.errorBodyLimit) {
+      return body;
+    }
+    return `${body.slice(0, this.errorBodyLimit)}...[truncated]`;
   }
 }

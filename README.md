@@ -4,6 +4,7 @@ Official Node.js client for the [PDFGate](https://pdfgate.com) API.
 
 PDFGate lets you generate, process, and secure PDFs via a simple API:
 - HTML or URL to PDF
+- Upload a PDF to reference it in later operations
 - Fillable forms
 - Flatten, compress, watermark, protect PDFs
 - Extract PDF form data
@@ -39,15 +40,16 @@ const client = new PdfGate('live_xxxxxx'); // Use your production API key
 
 ```ts
 import PdfGate from 'pdfgate';
-import fs from 'fs';
 
 const client = new PdfGate(process.env.PDFGATE_API_KEY);
 
-const pdf = await client.generatePdf({
+const doc = await client.generatePdf({
   url: 'https://example.com',
 });
 
-fs.writeFileSync('out.pdf', pdf);
+const pdf = await client.getFile({
+  documentId: doc.id,
+});
 ```
 
 ---
@@ -62,14 +64,21 @@ const client = new PdfGate(process.env.PDFGATE_API_KEY);
 
 ---
 
-## Buffer vs JSON responses
+## JSON responses for processing endpoints
 
-Most endpoints return **PDF bytes (`Buffer`) by default**. However, if you want a **JSON document response** (with optional `fileUrl`), use the following:
+The following methods always return a JSON document response (`PdfGateDocument`):
+- `generatePdf`
+- `uploadFile`
+- `flattenPdf`
+- `compressPdf`
+- `watermarkPdf`
+- `protectPdf`
+
+This SDK always sends `jsonResponse: true` internally for these methods.
 
 ```ts
 const doc = await client.generatePdf({
   url: 'https://example.com',
-  jsonResponse: true,
   preSignedUrlExpiresIn: 3600, // Use this to return fileUrl
 });
 
@@ -83,12 +92,13 @@ console.log(doc);
 ### Generate PDF from URL
 
 ```ts
-const pdf = await client.generatePdf({
+const doc = await client.generatePdf({
   url: 'https://example.com/',
   scale: 1.3,
+  preSignedUrlExpiresIn: 3600,
 });
 
-fs.writeFileSync('out.pdf', pdf);
+console.log(doc.fileUrl);
 ```
 
 ---
@@ -96,12 +106,12 @@ fs.writeFileSync('out.pdf', pdf);
 ### Generate PDF from HTML with fillable fields
 
 ```ts
-const pdf = await client.generatePdf({
+const doc = await client.generatePdf({
   html: '<div><p>Hello World</p> <div><input type="text" name="textfield"/></div></div>',
   enableFormFields: true,
 });
 
-fs.writeFileSync('out.pdf', pdf);
+console.log(doc.id);
 ```
 
 ---
@@ -116,6 +126,33 @@ const doc = await client.getDocument({
 
 console.log(doc);
 ```
+
+---
+
+### Upload a PDF file for later operations
+
+```ts
+import fs from 'fs';
+
+const bytes = fs.readFileSync('document.pdf');
+
+const doc = await client.uploadFile({
+  file: { name: 'document.pdf', data: Buffer.from(bytes) },
+  preSignedUrlExpiresIn: 3600,
+});
+
+console.log(doc.id, doc.type); // type = "uploaded"
+```
+
+You can also upload from a public URL:
+
+```ts
+const doc = await client.uploadFile({
+  url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+});
+```
+
+When both `file` and `url` are provided, `file` is prioritized and the SDK sends multipart data.
 
 ---
 
@@ -134,15 +171,11 @@ fs.writeFileSync('out.pdf', file);
 ### Flatten a PDF (make form fields non-editable)
 
 ```ts
-import fs from 'fs';
-
-const input = fs.readFileSync('toflatten.pdf');
-
-const out = await client.flattenPdf({
-  file: { name: 'toflatten.pdf', data: Buffer.from(input) },
+const doc = await client.flattenPdf({
+  documentId: 'DOCUMENT_ID',
 });
 
-fs.writeFileSync('out.pdf', out);
+console.log(doc);
 ```
 
 ---
@@ -153,7 +186,6 @@ fs.writeFileSync('out.pdf', out);
 const doc = await client.compressPdf({
   documentId: 'DOCUMENT_ID',
   linearize: false,
-  jsonResponse: true,
 });
 
 console.log(doc);
@@ -177,7 +209,7 @@ const doc = await client.watermarkPdf({
   opacity: 0.3,
 });
 
-fs.writeFileSync('out.pdf', doc);
+console.log(doc);
 ```
 
 ---
@@ -185,12 +217,8 @@ fs.writeFileSync('out.pdf', doc);
 ### Protect (encrypt) a PDF
 
 ```ts
-import fs from 'fs';
-
-const input = fs.readFileSync('input.pdf');
-
 const doc = await client.protectPdf({
-  file: { name: 'input.pdf', data: Buffer.from(input) },
+  documentId: 'DOCUMENT_ID',
   algorithm: 'AES256',
   userPassword: 'user',
   ownerPassword: 'owner',
@@ -200,7 +228,7 @@ const doc = await client.protectPdf({
   encryptMetadata: true,
 });
 
-fs.writeFileSync('protected.pdf', doc);
+console.log(doc);
 ```
 
 ---
@@ -213,4 +241,15 @@ const data = await client.extractPdfFormData({
 });
 
 console.log(data);
+```
+
+---
+
+## Acceptance tests
+
+The acceptance suite calls the real API and requires `PDFGATE_API_KEY`.
+If the env var is not set, acceptance tests are skipped with a clear message.
+
+```bash
+PDFGATE_API_KEY=test_xxxxx npm run test:acceptance
 ```
