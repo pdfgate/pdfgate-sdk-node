@@ -1,39 +1,19 @@
 const assert = require('node:assert/strict');
 const { test, before } = require('node:test');
-const PdfGate = require('../../cjs.cjs');
+const {
+  assertApiError,
+  assertDocumentShape,
+  createClient,
+  getSamplePdfBytes,
+  requireAcceptanceApiKey,
+} = require('./helpers.js');
 
-const apiKey = process.env.PDFGATE_API_KEY;
-
-function assertUploadedDocumentShape(doc) {
-  assert.ok(doc.id);
-  assert.equal(doc.status, 'completed');
-  assert.equal(doc.type, 'uploaded');
-  assert.ok(doc.createdAt);
-}
-
-async function buildSamplePdf(client) {
-  const generatedPdf = await client.generatePdf({
-    html: '<html><body><h1>PDFGate Upload Acceptance Test</h1></body></html>',
-    preSignedUrlExpiresIn: 3600,
-  });
-
-  assert.ok(generatedPdf.fileUrl);
-
-  const pdfBytes = await client.getFile({
-    documentId: generatedPdf.id,
-  });
-
-  return { generatedPdf, pdfBytes };
-}
-
-if (!apiKey) {
-  test('uploadFile acceptance tests require PDFGATE_API_KEY', { skip: true }, () => {});
-} else {
-  const client = new PdfGate(apiKey);
+if (requireAcceptanceApiKey('uploadFile acceptance tests require PDFGATE_API_KEY')) {
+  const client = createClient();
   let samplePdf = null;
 
   before(async () => {
-    samplePdf = await buildSamplePdf(client);
+    samplePdf = await getSamplePdfBytes(client);
   });
 
   test('uploadFile uploads a PDF from file bytes', async () => {
@@ -46,7 +26,7 @@ if (!apiKey) {
       },
     });
 
-    assertUploadedDocumentShape(doc);
+    assertDocumentShape(doc, { type: 'uploaded' });
   });
 
   test('uploadFile uploads a PDF from URL when file is not provided', async () => {
@@ -56,7 +36,7 @@ if (!apiKey) {
       url: generatedPdf.fileUrl,
     });
 
-    assertUploadedDocumentShape(doc);
+    assertDocumentShape(doc, { type: 'uploaded' });
   });
 
   test('uploadFile prioritizes file when both file and url are provided', async () => {
@@ -70,7 +50,7 @@ if (!apiKey) {
       url: 'not-a-valid-url',
     });
 
-    assertUploadedDocumentShape(doc);
+    assertDocumentShape(doc, { type: 'uploaded' });
   });
 
   test('uploadFile error includes statusCode, responseBody and cause', async () => {
@@ -80,15 +60,7 @@ if (!apiKey) {
           url: 'not-a-valid-url',
         });
       },
-      (error) => {
-        assert.equal(error.name, 'PdfGateApiError');
-        assert.equal(typeof error.statusCode, 'number');
-        assert.ok(error.statusCode >= 400);
-        assert.equal(typeof error.responseBody, 'string');
-        assert.ok(error.responseBody.length > 0);
-        assert.ok(error.cause);
-        return true;
-      }
+      assertApiError
     );
   });
 }
