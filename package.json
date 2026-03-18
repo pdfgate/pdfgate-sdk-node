@@ -52,6 +52,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
     "build:types": "tsc -p tsconfig.esm.json --emitDeclarationOnly",
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "prepublishOnly": "npm run build && npm run test:runtime && npm run test:types",
     "docs": "typedoc --out docs src/index.ts",
     "test:runtime": "npm run build && node --test test/runtime/**/*.test.js",
     "test:types": "tsc -p tsconfig.type-tests.json --noEmit",
