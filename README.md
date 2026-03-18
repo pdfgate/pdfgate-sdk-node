@@ -253,3 +253,22 @@ If the env var is not set, acceptance tests are skipped with a clear message.
 ```bash
 PDFGATE_API_KEY=test_xxxxx npm run test:acceptance
 ```
+
+---
+
+## Publishing
+
+Releases are published to npm by GitHub Actions trusted publishing.
+
+1. Update `package.json` to the release version.
+2. Merge that commit to `main`.
+3. Create and push a matching tag in the format `vX.Y.Z`.
+
+Example:
+
+```bash
+git tag v1.0.5
+git push origin v1.0.5
+```
+
+The publish workflow only runs for tags that match `v*`, and it fails unless the tag version exactly matches `package.json`.
