@@ -1,7 +1,7 @@
 {
   "name": "pdfgate",
   "version": "1.0.4",
-  "description": "PDFGate API client",
+  "description": "PDFGate Node SDK",
   "author": "PDFGate <support@pdfgate.com> (https://pdfgate.com/)",
   "homepage": "https://pdfgate.com",
   "repository": {
