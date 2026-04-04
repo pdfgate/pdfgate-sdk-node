@@ -1,4 +1,4 @@
-import PdfGate from '../../src/index.js';
+import PdfGate, { verifySignature } from '../../src/index.js';
 import { PdfGateDocument, PdfGateEnvelope } from '../../src/types/index.js';
 
 const client = new PdfGate('test_api_key');
@@ -50,6 +50,14 @@ void protectPromise;
 void createEnvelopePromise;
 void sendEnvelopePromise;
 void getEnvelopePromise;
+const verifyResult: true = verifySignature('whsecret_test', 't=1,v1=abcd', Buffer.from('{}'));
+const staticVerifyResult: true = PdfGate.verifySignature(
+  'whsecret_test',
+  't=1,v1=abcd',
+  Buffer.from('{}')
+);
+void verifyResult;
+void staticVerifyResult;
 
 // @ts-expect-error jsonResponse must not be part of public API.
 client.generatePdf({ url: 'https://example.com', jsonResponse: true });

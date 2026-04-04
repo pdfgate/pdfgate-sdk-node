@@ -9,6 +9,8 @@ import {
   PdfGateDocument,
 } from './types/index.js';
 import { PdfGateApiError } from './types/classes.js';
+import { PdfGateSignatureVerificationError } from './types/classes.js';
+import { verifySignature } from './webhooks/verifySignature.js';
 import {
   CompressPdfRequest,
   CompressPdfResponse,
@@ -28,8 +30,22 @@ import {
   WatermarkPdfResponse,
 } from './types/types.js';
 
+export { PdfGateSignatureVerificationError };
+
+/**
+ * Verify a PDFGate webhook signature against the raw request body.
+ *
+ * @param secret - Your PDFGate webhook signing secret.
+ * @param signatureHeader - The `x-pdfgate-signature` header value.
+ * @param payload - The raw request body exactly as received.
+ * @throws {PdfGateSignatureVerificationError} If the signature is missing, expired, or invalid.
+ */
+export { verifySignature };
+
 export default class PdfGate {
   private api: HttpClient;
+
+  static verifySignature = verifySignature;
 
   /**
    * Create a new PDFGate client.

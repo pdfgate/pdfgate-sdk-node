@@ -2,7 +2,11 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const EventEmitter = require('node:events');
 const https = require('node:https');
+const { createHmac } = require('node:crypto');
 const PdfGate = require('../../cjs.cjs');
+const {
+  verifySignatureInternal,
+} = require('../../dist/cjs/webhooks/verifySignature.js');
 
 const MOCK_DOC = {
   id: 'doc_123',
@@ -71,6 +75,10 @@ function withMockedHttpsResponse({ statusCode = 200, headers = {}, body }, run) 
     .finally(() => {
       https.request = originalRequest;
     });
+}
+
+function buildSignature(secret, timestamp, payload) {
+  return createHmac('sha256', secret).update(`${timestamp}.${payload}`).digest('hex');
 }
 
 test("generatePdf keeps validation for required 'url' or 'html'", async () => {
@@ -288,4 +296,86 @@ test('getEnvelope fetches the envelope by id and returns the envelope response',
   assert.equal(capturedRequest.options.method, 'GET');
   assert.equal(capturedRequest.options.path, '/envelope/env_123');
   assert.equal(capturedRequest.writtenBody(), '');
+});
+
+test('verifySignature succeeds when the signature is valid', () => {
+  const secret = 'whsecret_test';
+  const timestamp = 1712345678;
+  const payload = '{"id":"evt_123"}';
+  const signature = buildSignature(secret, timestamp, payload);
+
+  assert.equal(
+    verifySignatureInternal(secret, `t=${timestamp},v1=${signature}`, Buffer.from(payload), {
+      currentTimestamp: timestamp,
+    }),
+    true
+  );
+});
+
+test('verifySignature succeeds when one of multiple v1 signatures is valid', () => {
+  const secret = 'whsecret_test';
+  const timestamp = 1712345678;
+  const payload = '{"id":"evt_123"}';
+  const signature = buildSignature(secret, timestamp, payload);
+
+  assert.equal(
+    verifySignatureInternal(
+      secret,
+      `t=${timestamp},v1=deadbeef,v1=${signature},v1=badc0ffee`,
+      Buffer.from(payload),
+      {
+        currentTimestamp: timestamp,
+      }
+    ),
+    true
+  );
+});
+
+test('verifySignature fails when the header is missing a valid signature', () => {
+  assert.throws(
+    () => {
+      verifySignatureInternal('whsecret_test', 't=1712345678', Buffer.from('{}'), {
+        currentTimestamp: 1712345678,
+      });
+    },
+    /Missing signature/
+  );
+});
+
+test('verifySignature fails when the header is missing the timestamp', () => {
+  assert.throws(
+    () => {
+      verifySignatureInternal('whsecret_test', 'v1=deadbeef', Buffer.from('{}'), {
+        currentTimestamp: 1712345678,
+      });
+    },
+    /Missing timestamp/
+  );
+});
+
+test('verifySignature fails when the signature is expired', () => {
+  const secret = 'whsecret_test';
+  const timestamp = 1712345678;
+  const payload = '{"id":"evt_123"}';
+  const signature = buildSignature(secret, timestamp, payload);
+
+  assert.throws(
+    () => {
+      verifySignatureInternal(secret, `t=${timestamp},v1=${signature}`, Buffer.from(payload), {
+        currentTimestamp: timestamp + 301,
+      });
+    },
+    /Signature expired/
+  );
+});
+
+test('verifySignature fails when the signature is invalid', () => {
+  assert.throws(
+    () => {
+      verifySignatureInternal('whsecret_test', 't=1712345678,v1=deadbeef', Buffer.from('{}'), {
+        currentTimestamp: 1712345678,
+      });
+    },
+    /Invalid signature/
+  );
 });
