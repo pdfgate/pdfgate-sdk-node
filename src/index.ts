@@ -18,6 +18,8 @@ import {
   GeneratePdfResponse,
   ProtectPdfRequest,
   ProtectPdfResponse,
+  SendEnvelopeParams,
+  SendEnvelopeResponse,
   UploadFileRequest,
   UploadFileResponse,
   WatermarkPdfRequest,
@@ -259,6 +261,22 @@ export default class PdfGate {
    */
   async createEnvelope(params: CreateEnvelopeParams): Promise<CreateEnvelopeResponse> {
     return this.api.post<PdfGateEnvelope>('/envelope', params);
+  }
+
+  /**
+   * Send an envelope to its recipients so they can access the signing flow.
+   *
+   * **Endpoint:** `POST /envelope/{id}/send`
+   *
+   * This triggers PDFGate's recipient emails, secure signing links, and OTP verification flow.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The envelope ID to send.
+   * @returns The updated `PdfGateEnvelope`.
+   */
+  async sendEnvelope(params: SendEnvelopeParams): Promise<SendEnvelopeResponse> {
+    return this.api.post<PdfGateEnvelope>(`/envelope/${params.id}/send`);
   }
 
   /**

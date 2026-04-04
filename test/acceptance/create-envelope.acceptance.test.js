@@ -3,39 +3,19 @@ const { test, before } = require('node:test');
 const {
   assertApiError,
   createClient,
-  getEnvelopeSourcePdf,
+  getCreatedEnvelope,
   requireAcceptanceApiKey,
 } = require('./helpers.js');
 
 if (requireAcceptanceApiKey('createEnvelope acceptance tests require PDFGATE_API_KEY')) {
   const client = createClient();
-  let sourceDocument = null;
+  let envelope = null;
 
   before(async () => {
-    sourceDocument = await getEnvelopeSourcePdf(client);
+    envelope = await getCreatedEnvelope(client);
   });
 
   test('createEnvelope creates an envelope from a fillable source document', async () => {
-    const envelope = await client.createEnvelope({
-      requesterName: 'PDFGate Node SDK Acceptance Tests',
-      documents: [
-        {
-          sourceDocumentId: sourceDocument.id,
-          name: 'Employment Agreement',
-          recipients: [
-            {
-              email: 'anna@example.com',
-              name: 'Anna Smith',
-            },
-          ],
-        },
-      ],
-      metadata: {
-        customerId: 'cus_123',
-        department: 'sales',
-      },
-    });
-
     assert.equal(typeof envelope.id, 'string');
     assert.ok(envelope.id.length > 0);
     assert.equal(envelope.status, 'created');

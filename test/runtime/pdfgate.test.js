@@ -202,3 +202,46 @@ test('createEnvelope omits undefined optional fields recursively', async () => {
     false
   );
 });
+
+test('sendEnvelope posts to the envelope send endpoint and returns the envelope response', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'env_123',
+        status: 'in_progress',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        documents: [
+          {
+            sourceDocumentId: 'doc_123',
+            status: 'pending',
+            recipients: [
+              {
+                email: 'anna@example.com',
+                status: 'pending',
+                fields: [],
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.sendEnvelope({
+        id: 'env_123',
+      });
+
+      capturedRequest = getRequest();
+
+      assert.equal(response.id, 'env_123');
+      assert.equal(response.status, 'in_progress');
+      assert.ok(response.createdAt instanceof Date);
+    }
+  );
+
+  assert.equal(capturedRequest.options.path, '/envelope/env_123/send');
+  assert.equal(capturedRequest.writtenBody(), '');
+});

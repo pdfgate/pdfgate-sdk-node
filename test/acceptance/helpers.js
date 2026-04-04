@@ -7,6 +7,7 @@ let samplePdfPromise = null;
 let samplePdfBytesPromise = null;
 let fillablePdfPromise = null;
 let envelopeSourcePdfPromise = null;
+let createdEnvelopePromise = null;
 
 function requireAcceptanceApiKey(testName) {
   if (!apiKey) {
@@ -140,6 +141,36 @@ async function getEnvelopeSourcePdf(client) {
   return doc;
 }
 
+async function getCreatedEnvelope(client) {
+  if (!createdEnvelopePromise) {
+    createdEnvelopePromise = (async () => {
+      const sourceDocument = await getEnvelopeSourcePdf(client);
+
+      return client.createEnvelope({
+        requesterName: 'PDFGate Node SDK Acceptance Tests',
+        documents: [
+          {
+            sourceDocumentId: sourceDocument.id,
+            name: 'Employment Agreement',
+            recipients: [
+              {
+                email: 'anna@example.com',
+                name: 'Anna Smith',
+              },
+            ],
+          },
+        ],
+        metadata: {
+          customerId: 'cus_123',
+          department: 'sales',
+        },
+      });
+    })();
+  }
+
+  return createdEnvelopePromise;
+}
+
 function assertPdfBuffer(buffer) {
   assert.ok(Buffer.isBuffer(buffer));
   assert.ok(buffer.length > 0);
@@ -152,6 +183,7 @@ module.exports = {
   assertDocumentShape,
   assertPdfBuffer,
   createClient,
+  getCreatedEnvelope,
   getEnvelopeSourcePdf,
   getFillablePdf,
   getSamplePdf,
