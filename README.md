@@ -76,7 +76,7 @@ The following methods always return a JSON document response (`PdfGateDocument`)
 - `watermarkPdf`
 - `protectPdf`
 
-This SDK always sends `jsonResponse: true` internally for these methods.
+This SDK sends `jsonResponse: true` internally for the processing endpoints that require it. `uploadFile` returns JSON without that flag.
 
 Then `createEnvelope` returns a JSON envelope response (`PdfGateEnvelope`).
 

@@ -153,7 +153,7 @@ export default class PdfGate {
    * When both `file` and `url` are provided, `file` is prioritized and
    * the request is sent as multipart/form-data.
    *
-   * This SDK always requests JSON and returns a `PdfGateDocument`.
+   * This endpoint returns a JSON document response and the SDK returns a `PdfGateDocument`.
    *
    * Important: Accessing stored generated files requires enabling
    * “Save files” in the PDFGate Dashboard settings (disabled by default).
@@ -168,16 +168,12 @@ export default class PdfGate {
   async uploadFile(params: UploadFileRequest): Promise<UploadFileResponse> {
     const timeout = 3 * 60 * 1000; // 3 minutes
     if (params.file) {
-      const payload: UploadFileRequest & { jsonResponse: true } = {
-        ...params,
-        jsonResponse: true,
-      };
+      const payload: UploadFileRequest = { ...params };
       delete payload.url;
       return this.api.post<PdfGateDocument>('/upload', payload, 'multipart/form-data', timeout);
     }
 
-    const payload = { ...params, jsonResponse: true };
-    return this.api.post<PdfGateDocument>('/upload', payload, undefined, timeout);
+    return this.api.post<PdfGateDocument>('/upload', params, undefined, timeout);
   }
 
   /**
