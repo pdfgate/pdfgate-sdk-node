@@ -1,7 +1,11 @@
 import {
+  DocumentFieldType,
+  DocumentRecipientStatus,
   PageSizeType,
   DocumentStatus,
   DocumentType,
+  EnvelopeDocumentStatus,
+  EnvelopeStatus,
   EmulateMediaType,
   FileOrientation,
 } from './enums';
@@ -25,6 +29,39 @@ export interface PdfGateDocument {
   derivedFrom?: string;
   createdAt: Date;
   expiresAt: Date;
+}
+
+export interface EnvelopeFieldResponse {
+  name: string;
+  type: DocumentFieldType;
+  value?: any;
+  checked?: boolean;
+}
+
+export interface EnvelopeRecipientResponse {
+  email: string;
+  status: DocumentRecipientStatus;
+  signedAt?: Date;
+  viewedAt?: Date;
+  fields: EnvelopeFieldResponse[];
+}
+
+export interface EnvelopeDocumentResponse {
+  sourceDocumentId: string;
+  signedDocumentId?: string;
+  recipients: EnvelopeRecipientResponse[];
+  status: EnvelopeDocumentStatus;
+  completedAt?: Date;
+}
+
+export interface PdfGateEnvelope {
+  id: string;
+  status: EnvelopeStatus;
+  documents: EnvelopeDocumentResponse[];
+  createdAt: Date;
+  completedAt?: Date;
+  expiredAt?: Date;
+  metadata?: object;
 }
 
 export interface GeneratePdfRequest {

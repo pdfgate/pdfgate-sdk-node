@@ -1,5 +1,5 @@
 import { PdfStandardFont } from './enums';
-import { PdfGateDocument } from './interfaces';
+import { PdfGateDocument, PdfGateEnvelope } from './interfaces';
 
 /**
  * A file payload sent to multipart endpoints.
@@ -80,3 +80,23 @@ export type ProtectPdfRequest = {
 };
 
 export type ProtectPdfResponse = PdfGateDocument;
+
+export type EnvelopeRecipient = {
+  email: string;
+  name: string;
+  role?: string;
+};
+
+export type EnvelopeDocument = {
+  sourceDocumentId: string;
+  name: string;
+  recipients: EnvelopeRecipient[];
+};
+
+export type CreateEnvelopeParams = {
+  documents: EnvelopeDocument[];
+  requesterName: string;
+  metadata?: object;
+};
+
+export type CreateEnvelopeResponse = PdfGateEnvelope;

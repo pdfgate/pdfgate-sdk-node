@@ -6,6 +6,7 @@ PDFGate lets you generate, process, and secure PDFs via a simple API:
 - HTML or URL to PDF
 - Upload a PDF to reference it in later operations
 - Fillable forms
+- Envelopes for signing workflows
 - Flatten, compress, watermark, protect PDFs
 - Extract PDF form data
 
@@ -67,6 +68,7 @@ const client = new PdfGate(process.env.PDFGATE_API_KEY);
 ## JSON responses for processing endpoints
 
 The following methods always return a JSON document response (`PdfGateDocument`):
+
 - `generatePdf`
 - `uploadFile`
 - `flattenPdf`
@@ -75,6 +77,9 @@ The following methods always return a JSON document response (`PdfGateDocument`)
 - `protectPdf`
 
 This SDK always sends `jsonResponse: true` internally for these methods.
+
+Then `createEnvelope` returns a JSON envelope response (`PdfGateEnvelope`).
+
 
 ```ts
 const doc = await client.generatePdf({
@@ -241,6 +246,33 @@ const data = await client.extractPdfFormData({
 });
 
 console.log(data);
+```
+
+---
+
+### Create an envelope
+
+```ts
+const envelope = await client.createEnvelope({
+  requesterName: 'John Doe',
+  documents: [
+    {
+      sourceDocumentId: 'DOCUMENT_ID',
+      name: 'Employment Agreement',
+      recipients: [
+        {
+          email: 'anna@example.com',
+          name: 'Anna Smith',
+        },
+      ],
+    },
+  ],
+  metadata: {
+    customerId: 'cus_123',
+  },
+});
+
+console.log(envelope.id, envelope.status);
 ```
 
 ---

@@ -1,8 +1,11 @@
 import { HttpClient } from './httpClient/index.js';
 import {
+  CreateEnvelopeParams,
+  CreateEnvelopeResponse,
   GeneratePdfRequest,
   GetDocumentRequest,
   GetFileRequest,
+  PdfGateEnvelope,
   PdfGateDocument,
 } from './types/index.js';
 import { PdfGateApiError } from './types/classes.js';
@@ -239,6 +242,27 @@ export default class PdfGate {
     const payload = { ...params, jsonResponse: true };
     const timeout = 3 * 60 * 1000; // 3 minutes
     return this.api.post<PdfGateDocument>('/protect/pdf', payload, undefined, timeout);
+  }
+
+  /**
+   * Create an envelope from existing source documents for signing workflows.
+   *
+   * **Endpoint:** `POST /envelope`
+   *
+   * Provide:
+   * - `requesterName` (who or what system created the envelope)
+   * - `documents` (source documents + recipients for each document)
+   *
+   * The SDK forwards the payload as-is, preserving the API's camelCase wire format,
+   * and returns the envelope JSON response.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params - Envelope creation options.
+   * @returns A `PdfGateEnvelope`.
+   */
+  async createEnvelope(params: CreateEnvelopeParams): Promise<CreateEnvelopeResponse> {
+    return this.api.post<PdfGateEnvelope>('/envelope', params);
   }
 
   /**
