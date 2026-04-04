@@ -106,3 +106,9 @@ export type SendEnvelopeParams = {
 };
 
 export type SendEnvelopeResponse = PdfGateEnvelope;
+
+export type GetEnvelopeParams = {
+  id: string;
+};
+
+export type GetEnvelopeResponse = PdfGateEnvelope;

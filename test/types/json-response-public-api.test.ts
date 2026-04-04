@@ -38,6 +38,9 @@ const createEnvelopePromise: Promise<PdfGateEnvelope> = client.createEnvelope({
 const sendEnvelopePromise: Promise<PdfGateEnvelope> = client.sendEnvelope({
   id: 'env_1',
 });
+const getEnvelopePromise: Promise<PdfGateEnvelope> = client.getEnvelope({
+  id: 'env_1',
+});
 
 void generatePromise;
 void flattenPromise;
@@ -46,6 +49,7 @@ void watermarkPromise;
 void protectPromise;
 void createEnvelopePromise;
 void sendEnvelopePromise;
+void getEnvelopePromise;
 
 // @ts-expect-error jsonResponse must not be part of public API.
 client.generatePdf({ url: 'https://example.com', jsonResponse: true });

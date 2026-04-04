@@ -16,6 +16,8 @@ import {
   FlattenPdfRequest,
   FlattenPdfResponse,
   GeneratePdfResponse,
+  GetEnvelopeParams,
+  GetEnvelopeResponse,
   ProtectPdfRequest,
   ProtectPdfResponse,
   SendEnvelopeParams,
@@ -277,6 +279,22 @@ export default class PdfGate {
    */
   async sendEnvelope(params: SendEnvelopeParams): Promise<SendEnvelopeResponse> {
     return this.api.post<PdfGateEnvelope>(`/envelope/${params.id}/send`);
+  }
+
+  /**
+   * Retrieve the current state of an envelope.
+   *
+   * **Endpoint:** `GET /envelope/{id}`
+   *
+   * Use this to inspect the envelope status, document progress, and recipient statuses.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The envelope ID to retrieve.
+   * @returns The current `PdfGateEnvelope`.
+   */
+  getEnvelope(params: GetEnvelopeParams): Promise<GetEnvelopeResponse> {
+    return this.api.get<PdfGateEnvelope>(`/envelope/${params.id}`);
   }
 
   /**

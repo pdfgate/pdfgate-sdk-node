@@ -289,6 +289,18 @@ console.log(envelope.id, envelope.status); // status = "in_progress"
 
 ---
 
+### Get an envelope
+
+```ts
+const envelope = await client.getEnvelope({
+  id: 'ENVELOPE_ID',
+});
+
+console.log(envelope.id, envelope.status);
+```
+
+---
+
 ## Acceptance tests
 
 The acceptance suite calls the real API and requires `PDFGATE_API_KEY`.
