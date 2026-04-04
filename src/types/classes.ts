@@ -17,3 +17,10 @@ export class PdfGateApiError extends Error {
     this.cause = options.cause;
   }
 }
+
+export class PdfGateSignatureVerificationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PdfGateSignatureVerificationError';
+  }
+}

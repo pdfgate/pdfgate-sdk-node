@@ -6,6 +6,7 @@ PDFGate lets you generate, process, and secure PDFs via a simple API:
 - HTML or URL to PDF
 - Upload a PDF to reference it in later operations
 - Fillable forms
+- Envelopes for signing workflows
 - Flatten, compress, watermark, protect PDFs
 - Extract PDF form data
 
@@ -67,6 +68,7 @@ const client = new PdfGate(process.env.PDFGATE_API_KEY);
 ## JSON responses for processing endpoints
 
 The following methods always return a JSON document response (`PdfGateDocument`):
+
 - `generatePdf`
 - `uploadFile`
 - `flattenPdf`
@@ -74,7 +76,10 @@ The following methods always return a JSON document response (`PdfGateDocument`)
 - `watermarkPdf`
 - `protectPdf`
 
-This SDK always sends `jsonResponse: true` internally for these methods.
+This SDK sends `jsonResponse: true` internally for the processing endpoints that require it. `uploadFile` returns JSON without that flag.
+
+Then `createEnvelope` returns a JSON envelope response (`PdfGateEnvelope`).
+
 
 ```ts
 const doc = await client.generatePdf({
@@ -242,6 +247,104 @@ const data = await client.extractPdfFormData({
 
 console.log(data);
 ```
+
+---
+
+### Create an envelope
+
+```ts
+const envelope = await client.createEnvelope({
+  requesterName: 'John Doe',
+  documents: [
+    {
+      sourceDocumentId: 'DOCUMENT_ID',
+      name: 'Employment Agreement',
+      recipients: [
+        {
+          email: 'anna@example.com',
+          name: 'Anna Smith',
+        },
+      ],
+    },
+  ],
+  metadata: {
+    customerId: 'cus_123',
+  },
+});
+
+console.log(envelope.id, envelope.status);
+```
+
+---
+
+### Send an envelope
+
+```ts
+const envelope = await client.sendEnvelope({
+  id: 'ENVELOPE_ID',
+});
+
+console.log(envelope.id, envelope.status); // status = "in_progress"
+```
+
+---
+
+### Get an envelope
+
+```ts
+const envelope = await client.getEnvelope({
+  id: 'ENVELOPE_ID',
+});
+
+console.log(envelope.id, envelope.status);
+```
+
+---
+
+### Verify webhook signatures
+
+PDFGate signs webhook requests with the `x-pdfgate-signature` header. Verify that header against the raw request body before trusting the payload.
+
+```ts
+import PdfGate, { verifySignature } from 'pdfgate';
+
+const secret = 'whsecret_...';
+const signature = req.get('x-pdfgate-signature');
+
+verifySignature(secret, signature, req.body);
+// or: PdfGate.verifySignature(secret, signature, req.body);
+```
+
+The verifier expects:
+
+- the raw request body exactly as received
+- a `t=...` timestamp in the header
+- at least one `v1=...` signature in the header
+- a timestamp no older than 5 minutes by default
+
+If verification fails, it throws `PdfGateSignatureVerificationError`.
+
+Example with Express raw body parsing:
+
+```ts
+import express from 'express';
+import { verifySignature } from 'pdfgate';
+
+const app = express();
+
+app.use(express.raw({ type: 'application/json' }));
+
+app.post('/pdfgate-callback', (req, res) => {
+  try {
+    verifySignature('whsecret_...', req.get('x-pdfgate-signature'), req.body);
+    res.sendStatus(200);
+  } catch (error) {
+    res.sendStatus(400);
+  }
+});
+```
+
+During secret rotation PDFGate may send multiple `v1` signatures. The helper considers the webhook valid if any `v1` signature matches.
 
 ---
 

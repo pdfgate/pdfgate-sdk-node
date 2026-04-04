@@ -1,11 +1,16 @@
 import { HttpClient } from './httpClient/index.js';
 import {
+  CreateEnvelopeParams,
+  CreateEnvelopeResponse,
   GeneratePdfRequest,
   GetDocumentRequest,
   GetFileRequest,
+  PdfGateEnvelope,
   PdfGateDocument,
 } from './types/index.js';
 import { PdfGateApiError } from './types/classes.js';
+import { PdfGateSignatureVerificationError } from './types/classes.js';
+import { verifySignature } from './webhooks/verifySignature.js';
 import {
   CompressPdfRequest,
   CompressPdfResponse,
@@ -13,16 +18,34 @@ import {
   FlattenPdfRequest,
   FlattenPdfResponse,
   GeneratePdfResponse,
+  GetEnvelopeParams,
+  GetEnvelopeResponse,
   ProtectPdfRequest,
   ProtectPdfResponse,
+  SendEnvelopeParams,
+  SendEnvelopeResponse,
   UploadFileRequest,
   UploadFileResponse,
   WatermarkPdfRequest,
   WatermarkPdfResponse,
 } from './types/types.js';
 
+export { PdfGateSignatureVerificationError };
+
+/**
+ * Verify a PDFGate webhook signature against the raw request body.
+ *
+ * @param secret - Your PDFGate webhook signing secret.
+ * @param signatureHeader - The `x-pdfgate-signature` header value.
+ * @param payload - The raw request body exactly as received.
+ * @throws {PdfGateSignatureVerificationError} If the signature is missing, expired, or invalid.
+ */
+export { verifySignature };
+
 export default class PdfGate {
   private api: HttpClient;
+
+  static verifySignature = verifySignature;
 
   /**
    * Create a new PDFGate client.
@@ -150,7 +173,7 @@ export default class PdfGate {
    * When both `file` and `url` are provided, `file` is prioritized and
    * the request is sent as multipart/form-data.
    *
-   * This SDK always requests JSON and returns a `PdfGateDocument`.
+   * This endpoint returns a JSON document response and the SDK returns a `PdfGateDocument`.
    *
    * Important: Accessing stored generated files requires enabling
    * “Save files” in the PDFGate Dashboard settings (disabled by default).
@@ -165,16 +188,12 @@ export default class PdfGate {
   async uploadFile(params: UploadFileRequest): Promise<UploadFileResponse> {
     const timeout = 3 * 60 * 1000; // 3 minutes
     if (params.file) {
-      const payload: UploadFileRequest & { jsonResponse: true } = {
-        ...params,
-        jsonResponse: true,
-      };
+      const payload: UploadFileRequest = { ...params };
       delete payload.url;
       return this.api.post<PdfGateDocument>('/upload', payload, 'multipart/form-data', timeout);
     }
 
-    const payload = { ...params, jsonResponse: true };
-    return this.api.post<PdfGateDocument>('/upload', payload, undefined, timeout);
+    return this.api.post<PdfGateDocument>('/upload', params, undefined, timeout);
   }
 
   /**
@@ -239,6 +258,59 @@ export default class PdfGate {
     const payload = { ...params, jsonResponse: true };
     const timeout = 3 * 60 * 1000; // 3 minutes
     return this.api.post<PdfGateDocument>('/protect/pdf', payload, undefined, timeout);
+  }
+
+  /**
+   * Create an envelope from existing source documents for signing workflows.
+   *
+   * **Endpoint:** `POST /envelope`
+   *
+   * Provide:
+   * - `requesterName` (who or what system created the envelope)
+   * - `documents` (source documents + recipients for each document)
+   *
+   * The SDK forwards the payload as-is, preserving the API's camelCase wire format,
+   * and returns the envelope JSON response.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params - Envelope creation options.
+   * @returns A `PdfGateEnvelope`.
+   */
+  async createEnvelope(params: CreateEnvelopeParams): Promise<CreateEnvelopeResponse> {
+    return this.api.post<PdfGateEnvelope>('/envelope', params);
+  }
+
+  /**
+   * Send an envelope to its recipients so they can access the signing flow.
+   *
+   * **Endpoint:** `POST /envelope/{id}/send`
+   *
+   * This triggers PDFGate's recipient emails, secure signing links, and OTP verification flow.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The envelope ID to send.
+   * @returns The updated `PdfGateEnvelope`.
+   */
+  async sendEnvelope(params: SendEnvelopeParams): Promise<SendEnvelopeResponse> {
+    return this.api.post<PdfGateEnvelope>(`/envelope/${params.id}/send`);
+  }
+
+  /**
+   * Retrieve the current state of an envelope.
+   *
+   * **Endpoint:** `GET /envelope/{id}`
+   *
+   * Use this to inspect the envelope status, document progress, and recipient statuses.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The envelope ID to retrieve.
+   * @returns The current `PdfGateEnvelope`.
+   */
+  getEnvelope(params: GetEnvelopeParams): Promise<GetEnvelopeResponse> {
+    return this.api.get<PdfGateEnvelope>(`/envelope/${params.id}`);
   }
 
   /**

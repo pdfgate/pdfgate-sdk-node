@@ -15,6 +15,39 @@ export enum DocumentType {
   SIGNED = 'signed',
 }
 
+export enum EnvelopeStatus {
+  CREATED = 'created',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  EXPIRED = 'expired',
+}
+
+export enum EnvelopeDocumentStatus {
+  PENDING = 'pending',
+  SENT_FOR_SIGNING = 'sent_for_signing',
+  SIGNING_IN_PROGRESS = 'signing_in_progress',
+  SIGNING_FAILED = 'signing_failed',
+  COMPLETED = 'completed',
+}
+
+export enum DocumentRecipientStatus {
+  PENDING = 'pending',
+  SIGNED = 'signed',
+}
+
+export enum DocumentFieldType {
+  SIGNATURE = 'signature',
+  TEXT = 'text',
+  NUMBER = 'number',
+  TEXT_AREA = 'textarea',
+  DATE = 'date',
+  TIME = 'time',
+  DATETIME = 'datetime',
+  CHECKBOX = 'checkbox',
+  RADIO_BUTTON = 'radio',
+  SELECT = 'select',
+}
+
 export enum PageSizeType {
   a0 = 'a0',
   a1 = 'a1',

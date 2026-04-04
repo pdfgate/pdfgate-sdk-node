@@ -9,6 +9,7 @@ export class HttpClient {
   config: HttpClientConfig;
   boundary: string = '----boundary';
   errorBodyLimit = 2048;
+  isoDatePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 
   constructor(config: HttpClientConfig) {
     this.config = config;
@@ -80,9 +81,9 @@ export class HttpClient {
     });
   }
 
-  parseJsonSafe(data: string) {
+  parseJsonSafe<T>(data: string): T | null {
     try {
-      return JSON.parse(data);
+      return this.buildJsonResponse<T>(JSON.parse(data));
     } catch {
       return null;
     }
@@ -111,17 +112,18 @@ export class HttpClient {
       'Content-Type': `application/json`,
     };
 
+    const sanitizedBody = this.sanitizePayload(params.body);
     let data: any;
     if (params.contentType === 'multipart/form-data') {
-      data = this.generateFormData(params.body);
+      data = this.generateFormData(sanitizedBody);
       headers = {
         'Content-Type': `multipart/form-data; boundary=${this.boundary}`,
         'Content-Length': data.length,
       };
     }
 
-    if (params.body && params.contentType !== 'multipart/form-data') {
-      data = JSON.stringify(params.body);
+    if (sanitizedBody && params.contentType !== 'multipart/form-data') {
+      data = JSON.stringify(sanitizedBody);
     }
 
     return new Promise<T>((resolve, reject) => {
@@ -153,12 +155,12 @@ export class HttpClient {
               const responseContentType = String(response.headers['content-type'] || '');
               const respData = this.isBinaryFormat(responseContentType)
                 ? bufferData
-                : this.parseJsonSafe(bufferData?.toString('utf8'));
-              resolve(bufferData ? respData : ({} as T));
+                : this.parseJsonSafe<T>(bufferData?.toString('utf8'));
+              resolve(bufferData ? (respData as T) : ({} as T));
             } else {
               const responseText = bufferData?.toString('utf8') || '';
               const truncatedBody = this.truncateErrorBody(responseText);
-              const apiError = this.parseJsonSafe(responseText);
+              const apiError = this.parseJsonSafe<{ message?: string }>(responseText);
               reject(
                 new PdfGateApiError(
                   `HTTP Error: status [${response.statusCode}] - ${apiError?.message || response.statusMessage || 'Unknown error'}`,
@@ -209,5 +211,58 @@ export class HttpClient {
       return body;
     }
     return `${body.slice(0, this.errorBodyLimit)}...[truncated]`;
+  }
+
+  private sanitizePayload(value: any): any {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+
+    if (Buffer.isBuffer(value)) {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item) => this.sanitizePayload(item)).filter((item) => item !== undefined);
+    }
+
+    if (value instanceof Date) {
+      return value;
+    }
+
+    if (typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value)
+          .map(([key, nestedValue]) => [key, this.sanitizePayload(nestedValue)])
+          .filter(([, nestedValue]) => nestedValue !== undefined)
+      );
+    }
+
+    return value;
+  }
+
+  private buildJsonResponse<T>(value: any): T {
+    return this.normalizeJsonValue(value) as T;
+  }
+
+  private normalizeJsonValue(value: any): any {
+    if (Array.isArray(value)) {
+      return value.map((item) => this.normalizeJsonValue(item));
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value).map(([key, nestedValue]) => [
+          key,
+          this.normalizeJsonValue(nestedValue),
+        ])
+      );
+    }
+
+    if (typeof value === 'string' && this.isoDatePattern.test(value)) {
+      return new Date(value);
+    }
+
+    return value;
   }
 }
