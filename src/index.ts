@@ -30,6 +30,24 @@ import {
   WatermarkPdfResponse,
 } from './types/types.js';
 
+export type {
+  CreateEnvelopeParams,
+  CreateEnvelopeResponse,
+  EnvelopeDocument,
+  EnvelopeRecipient,
+  GetEnvelopeParams,
+  GetEnvelopeResponse,
+  SendEnvelopeParams,
+  SendEnvelopeResponse,
+} from './types/types.js';
+
+export type {
+  PdfGateEnvelope,
+  EnvelopeDocumentResponse,
+  EnvelopeRecipientResponse,
+  EnvelopeFieldResponse,
+} from './types/interfaces.js';
+
 export { PdfGateSignatureVerificationError };
 
 /**
