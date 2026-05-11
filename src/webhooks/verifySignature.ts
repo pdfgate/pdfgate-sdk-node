@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { PdfGateSignatureVerificationError } from '../types/classes.js';
+import { WebhookEvent } from '../types/interfaces.js';
 
 type VerifySignatureOptions = {
   toleranceSeconds?: number;
@@ -10,7 +11,7 @@ export function verifySignature(
   secret: string,
   signatureHeader: string | undefined,
   payload: Buffer | string
-): true {
+): WebhookEvent {
   return verifySignatureInternal(secret, signatureHeader, payload);
 }
 
@@ -19,7 +20,7 @@ export function verifySignatureInternal(
   signatureHeader: string | undefined,
   payload: Buffer | string,
   options: VerifySignatureOptions = {}
-): true {
+): WebhookEvent {
   const parts = signatureHeader?.split(',').map((part) => part.trim()) ?? [];
   let timestamp: number | null = null;
   const signatures: string[] = [];
@@ -72,5 +73,5 @@ export function verifySignatureInternal(
     throw new PdfGateSignatureVerificationError('Invalid signature');
   }
 
-  return true;
+  return JSON.parse(payload.toString('utf8')) as WebhookEvent;
 }

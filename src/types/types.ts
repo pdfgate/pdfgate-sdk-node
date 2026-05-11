@@ -1,5 +1,5 @@
-import { PdfStandardFont } from './enums';
-import { PdfGateDocument, PdfGateEnvelope } from './interfaces';
+import { PdfStandardFont } from './enums.js';
+import { PdfGateDocument, PdfGateEnvelope } from './interfaces.js';
 
 /**
  * A file payload sent to multipart endpoints.
@@ -85,6 +85,8 @@ export type EnvelopeRecipient = {
   email: string;
   name: string;
   role?: string;
+  reminderIntervalDays?: number;
+  reminderAttempts?: number;
 };
 
 export type EnvelopeDocument = {
