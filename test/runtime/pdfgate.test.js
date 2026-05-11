@@ -301,24 +301,24 @@ test('getEnvelope fetches the envelope by id and returns the envelope response',
 test('verifySignature succeeds when the signature is valid', () => {
   const secret = 'whsecret_test';
   const timestamp = 1712345678;
-  const payload = '{"id":"evt_123"}';
+  const payload = '{"id":"123"}';
   const signature = buildSignature(secret, timestamp, payload);
 
-  assert.equal(
+  assert.deepEqual(
     verifySignatureInternal(secret, `t=${timestamp},v1=${signature}`, Buffer.from(payload), {
       currentTimestamp: timestamp,
     }),
-    true
+    { id: '123' }
   );
 });
 
 test('verifySignature succeeds when one of multiple v1 signatures is valid', () => {
   const secret = 'whsecret_test';
   const timestamp = 1712345678;
-  const payload = '{"id":"evt_123"}';
+  const payload = '{"id":"123"}';
   const signature = buildSignature(secret, timestamp, payload);
 
-  assert.equal(
+  assert.deepEqual(
     verifySignatureInternal(
       secret,
       `t=${timestamp},v1=deadbeef,v1=${signature},v1=badc0ffee`,
@@ -327,7 +327,7 @@ test('verifySignature succeeds when one of multiple v1 signatures is valid', () 
         currentTimestamp: timestamp,
       }
     ),
-    true
+    { id: '123' }
   );
 });
 

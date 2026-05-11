@@ -2,8 +2,8 @@ import * as https from 'node:https';
 import * as http from 'node:http';
 import { URL } from 'node:url';
 import path from 'node:path';
-import { ContentType, HttpClientConfig, HttpRequestParams } from './types';
-import { PdfGateApiError } from '../types/classes';
+import { ContentType, HttpClientConfig, HttpRequestParams } from './types.js';
+import { PdfGateApiError } from '../types/classes.js';
 
 export class HttpClient {
   config: HttpClientConfig;

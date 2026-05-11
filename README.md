@@ -1,17 +1,27 @@
-# PDFGate Node SDK
+# PDFGate Node.js SDK
 
-Official Node.js client for the [PDFGate](https://pdfgate.com) API.
+Official npm package for using the [PDFGate](https://pdfgate.com) API from Node.js and TypeScript applications.
 
-PDFGate lets you generate, process, and secure PDFs via a simple API:
-- HTML or URL to PDF
-- Upload a PDF to reference it in later operations
-- Fillable forms
-- Envelopes for signing workflows
-- Flatten, compress, watermark, protect PDFs
-- Extract PDF form data
+Use `pdfgate` to generate PDFs from HTML or URLs, upload stored PDFs, create signing envelopes, verify webhooks, and run PDF operations such as flattening, compression, watermarking, encryption, and form-data extraction.
 
 📘 Documentation: https://pdfgate.com/documentation  
 🔑 Dashboard & API keys: https://dashboard.pdfgate.com
+
+---
+
+## Table of contents
+
+- [Installation](#installation)
+- [Requirements](#requirements)
+- [Create a client](#create-a-client)
+- [Quick start](#quick-start)
+- [Module formats](#module-formats)
+- [Response objects](#response-objects)
+- [Examples](#examples)
+- [Envelope signing workflows](#envelope-signing-workflows)
+- [Webhook signature verification](#webhook-signature-verification)
+- [Development](#development)
+- [Publishing](#publishing)
 
 ---
 
@@ -21,19 +31,32 @@ PDFGate lets you generate, process, and secure PDFs via a simple API:
 npm install pdfgate
 # or
 yarn add pdfgate
+# or
+pnpm add pdfgate
 ```
 
 ---
 
-## Sandbox / Production client
+## Requirements
+
+- Node.js 18 or newer is recommended.
+- TypeScript users get bundled types from the package.
+- API keys must start with `test_` for sandbox or `live_` for production.
+
+---
+
+## Create a client
 
 ```ts
 import PdfGate from 'pdfgate';
 
-const client = new PdfGate('live_xxxxxx'); // Use your production API key
-// const client = new PdfGate('test_xxxxxx'); // Use your sandbox API key
-
+const client = new PdfGate(process.env.PDFGATE_API_KEY);
 ```
+
+The SDK selects the API host from the key prefix:
+
+- `test_...` uses the PDFGate sandbox API
+- `live_...` uses the PDFGate production API
 
 ---
 
@@ -45,19 +68,32 @@ import PdfGate from 'pdfgate';
 const client = new PdfGate(process.env.PDFGATE_API_KEY);
 
 const doc = await client.generatePdf({
-  url: 'https://example.com',
+  html: '<h1>Hello from PDFGate</h1>',
+  preSignedUrlExpiresIn: 3600,
 });
 
-const pdf = await client.getFile({
+console.log(doc.id, doc.fileUrl);
+
+const pdfBuffer = await client.getFile({
   documentId: doc.id,
 });
 ```
 
 ---
 
-## Usage with CommonJS
+## Module formats
 
-```js
+### ESM
+
+```ts
+import PdfGate from 'pdfgate';
+
+const client = new PdfGate(process.env.PDFGATE_API_KEY);
+```
+
+### CommonJS
+
+```cjs
 const PdfGate = require('pdfgate');
 
 const client = new PdfGate(process.env.PDFGATE_API_KEY);
@@ -65,9 +101,9 @@ const client = new PdfGate(process.env.PDFGATE_API_KEY);
 
 ---
 
-## JSON responses for processing endpoints
+## Response objects
 
-The following methods always return a JSON document response (`PdfGateDocument`):
+PDF processing methods return a typed `PdfGateDocument` object:
 
 - `generatePdf`
 - `uploadFile`
@@ -76,10 +112,13 @@ The following methods always return a JSON document response (`PdfGateDocument`)
 - `watermarkPdf`
 - `protectPdf`
 
-This SDK sends `jsonResponse: true` internally for the processing endpoints that require it. `uploadFile` returns JSON without that flag.
+The SDK sends `jsonResponse: true` internally for processing endpoints that require it. You do not need to pass that flag yourself.
 
-Then `createEnvelope` returns a JSON envelope response (`PdfGateEnvelope`).
+Envelope methods return `PdfGateEnvelope` objects:
 
+- `createEnvelope`
+- `sendEnvelope`
+- `getEnvelope`
 
 ```ts
 const doc = await client.generatePdf({
@@ -90,11 +129,13 @@ const doc = await client.generatePdf({
 console.log(doc);
 ```
 
+Call `getFile` when you need raw PDF bytes.
+
 ---
 
 ## Examples
 
-### Generate PDF from URL
+### Generate a PDF from a URL
 
 ```ts
 const doc = await client.generatePdf({
@@ -108,7 +149,7 @@ console.log(doc.fileUrl);
 
 ---
 
-### Generate PDF from HTML with fillable fields
+### Generate a PDF from HTML with fillable fields
 
 ```ts
 const doc = await client.generatePdf({
@@ -164,6 +205,8 @@ When both `file` and `url` are provided, `file` is prioritized and the SDK sends
 ### Download a stored PDF file
 
 ```ts
+import fs from 'fs';
+
 const file = await client.getFile({
   documentId: 'DOCUMENT_ID',
 });
@@ -250,7 +293,11 @@ console.log(data);
 
 ---
 
-### Create an envelope
+## Envelope signing workflows
+
+Use envelopes when a generated PDF needs to be sent to one or more recipients for signing. Each envelope document references a stored source document and defines the recipients that should complete that document.
+
+### Create an envelope with recipient reminders
 
 ```ts
 const envelope = await client.createEnvelope({
@@ -263,6 +310,9 @@ const envelope = await client.createEnvelope({
         {
           email: 'anna@example.com',
           name: 'Anna Smith',
+          role: 'signer',
+          reminderIntervalDays: 2,
+          reminderAttempts: 3,
         },
       ],
     },
@@ -274,6 +324,11 @@ const envelope = await client.createEnvelope({
 
 console.log(envelope.id, envelope.status);
 ```
+
+Recipient reminder settings are optional:
+
+- `reminderIntervalDays` controls how many days PDFGate waits between reminder emails.
+- `reminderAttempts` controls how many reminders should be sent to the recipient.
 
 ---
 
@@ -301,18 +356,17 @@ console.log(envelope.id, envelope.status);
 
 ---
 
-### Verify webhook signatures
+## Webhook signature verification
 
 PDFGate signs webhook requests with the `x-pdfgate-signature` header. Verify that header against the raw request body before trusting the payload.
 
 ```ts
-import PdfGate, { verifySignature } from 'pdfgate';
+import { verifySignature } from 'pdfgate';
 
 const secret = 'whsecret_...';
 const signature = req.get('x-pdfgate-signature');
 
 verifySignature(secret, signature, req.body);
-// or: PdfGate.verifySignature(secret, signature, req.body);
 ```
 
 The verifier expects:
@@ -336,7 +390,8 @@ app.use(express.raw({ type: 'application/json' }));
 
 app.post('/pdfgate-callback', (req, res) => {
   try {
-    verifySignature('whsecret_...', req.get('x-pdfgate-signature'), req.body);
+    const event = verifySignature('whsecret_...', req.get('x-pdfgate-signature'), req.body);
+    console.log(event);
     res.sendStatus(200);
   } catch (error) {
     res.sendStatus(400);
@@ -348,7 +403,19 @@ During secret rotation PDFGate may send multiple `v1` signatures. The helper con
 
 ---
 
-## Acceptance tests
+## Development
+
+Install dependencies and run the local checks:
+
+```bash
+npm install
+npm run build
+npm run test:runtime
+npm run test:types
+npm run lint
+```
+
+### Acceptance tests
 
 The acceptance suite calls the real API and requires `PDFGATE_API_KEY`.
 If the env var is not set, acceptance tests are skipped with a clear message.

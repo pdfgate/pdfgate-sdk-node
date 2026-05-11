@@ -1,2 +1,2 @@
-export * from './httpClient';
-export * from './types';
+export * from './httpClient.js';
+export * from './types.js';

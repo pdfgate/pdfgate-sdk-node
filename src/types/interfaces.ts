@@ -8,7 +8,7 @@ import {
   EnvelopeStatus,
   EmulateMediaType,
   FileOrientation,
-} from './enums';
+} from './enums.js';
 
 export interface GetDocumentRequest {
   id: string;
@@ -31,6 +31,17 @@ export interface PdfGateDocument {
   expiresAt: Date;
 }
 
+export interface WebhookEvent {
+  eventId: string;
+  event: string;
+  timestamp: Date;
+  resource: {
+    kind: string;
+    id: string;
+  };
+  data: Record<string, any>;
+}
+
 export interface EnvelopeFieldResponse {
   name: string;
   type: DocumentFieldType;
@@ -44,11 +55,14 @@ export interface EnvelopeRecipientResponse {
   signedAt?: Date;
   viewedAt?: Date;
   fields: EnvelopeFieldResponse[];
+  signingLink?: string;
+  previewLink?: string;
 }
 
 export interface EnvelopeDocumentResponse {
   sourceDocumentId: string;
   signedDocumentId?: string;
+  auditLogDocumentId?: string;
   recipients: EnvelopeRecipientResponse[];
   status: EnvelopeDocumentStatus;
   completedAt?: Date;

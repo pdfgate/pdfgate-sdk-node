@@ -1,5 +1,5 @@
 import PdfGate, { verifySignature } from '../../src/index.js';
-import { PdfGateDocument, PdfGateEnvelope } from '../../src/types/index.js';
+import { PdfGateDocument, PdfGateEnvelope, WebhookEvent } from '../../src/types/index.js';
 
 const client = new PdfGate('test_api_key');
 
@@ -50,8 +50,12 @@ void protectPromise;
 void createEnvelopePromise;
 void sendEnvelopePromise;
 void getEnvelopePromise;
-const verifyResult: true = verifySignature('whsecret_test', 't=1,v1=abcd', Buffer.from('{}'));
-const staticVerifyResult: true = PdfGate.verifySignature(
+const verifyResult: WebhookEvent = verifySignature(
+  'whsecret_test',
+  't=1,v1=abcd',
+  Buffer.from('{}')
+);
+const staticVerifyResult: WebhookEvent = PdfGate.verifySignature(
   'whsecret_test',
   't=1,v1=abcd',
   Buffer.from('{}')
