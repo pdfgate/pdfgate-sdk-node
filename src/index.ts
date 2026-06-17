@@ -50,6 +50,19 @@ export type {
 
 export { PdfGateSignatureVerificationError };
 
+export {
+  DocumentStatus,
+  DocumentType,
+  EnvelopeStatus,
+  EnvelopeDocumentStatus,
+  DocumentRecipientStatus,
+  DocumentFieldType,
+  PageSizeType,
+  FileOrientation,
+  EmulateMediaType,
+  PdfStandardFont,
+} from './types/enums.js';
+
 /**
  * Verify a PDFGate webhook signature against the raw request body.
  *
