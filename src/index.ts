@@ -12,14 +12,24 @@ import { PdfGateApiError } from './types/classes.js';
 import { PdfGateSignatureVerificationError } from './types/classes.js';
 import { verifySignature } from './webhooks/verifySignature.js';
 import {
+  AddFormFieldsRequest,
+  AddFormFieldsResponse,
   CompressPdfRequest,
   CompressPdfResponse,
+  CreateWebhookRequest,
+  CreateWebhookResponse,
+  DeleteDocumentRequest,
+  DeleteDocumentResponse,
+  DeleteWebhookParams,
+  DeleteWebhookResponse,
   ExtractPdfDataRequest,
   FlattenPdfRequest,
   FlattenPdfResponse,
   GeneratePdfResponse,
   GetEnvelopeParams,
   GetEnvelopeResponse,
+  GetWebhookParams,
+  GetWebhookResponse,
   ProtectPdfRequest,
   ProtectPdfResponse,
   SendEnvelopeParams,
@@ -29,14 +39,29 @@ import {
   WatermarkPdfRequest,
   WatermarkPdfResponse,
 } from './types/types.js';
+import { WebhookResponse } from './types/interfaces.js';
 
 export type {
+  AddFormFieldsRequest,
+  AddFormFieldsResponse,
   CreateEnvelopeParams,
   CreateEnvelopeResponse,
+  CreateWebhookRequest,
+  CreateWebhookResponse,
+  DeleteDocumentRequest,
+  DeleteDocumentResponse,
+  DeleteWebhookParams,
+  DeleteWebhookResponse,
   EnvelopeDocument,
   EnvelopeRecipient,
+  FieldOverride,
+  FlattenPdfRequest,
+  FlattenPdfResponse,
   GetEnvelopeParams,
   GetEnvelopeResponse,
+  GetWebhookParams,
+  GetWebhookResponse,
+  ManualField,
   SendEnvelopeParams,
   SendEnvelopeResponse,
 } from './types/types.js';
@@ -46,6 +71,8 @@ export type {
   EnvelopeDocumentResponse,
   EnvelopeRecipientResponse,
   EnvelopeFieldResponse,
+  WebhookResponse,
+  WebhookEvent,
 } from './types/interfaces.js';
 
 export { PdfGateSignatureVerificationError };
@@ -61,6 +88,8 @@ export {
   FileOrientation,
   EmulateMediaType,
   PdfStandardFont,
+  WebhookStatus,
+  WebhookEventType,
 } from './types/enums.js';
 
 /**
@@ -153,17 +182,48 @@ export default class PdfGate {
    * If `documentId` is provided, PDFGate creates a **new** flattened document (does not overwrite).
    * This SDK always requests JSON and returns a `PdfGateDocument`.
    *
+   * Provide `fieldNames` to flatten only those specific form fields; the rest of
+   * the form stays interactive. Omit it to flatten the whole document.
+   *
    * `preSignedUrlExpiresIn` is in **seconds** (min 60, max 86400).
    *
    * @see https://pdfgate.com/documentation
    *
-   * @param params - Flatten options; includes `documentId`, optional metadata, etc.
+   * @param params - Flatten options; includes `documentId`, optional `fieldNames`, metadata, etc.
    * @returns A `PdfGateDocument`.
    */
   async flattenPdf(params: FlattenPdfRequest): Promise<FlattenPdfResponse> {
     const payload = { ...params, jsonResponse: true };
     const timeout = 3 * 60 * 1000; // 3 minutes
     return this.api.post<PdfGateDocument>('/forms/flatten', payload, undefined, timeout);
+  }
+
+  /**
+   * Add interactive form fields to a PDF.
+   *
+   * **Endpoint:** `POST /forms/fields`
+   *
+   * Provide:
+   * - `documentId` (reference an existing stored document).
+   *
+   * Two complementary ways to add fields:
+   * - `fieldOverrides`: customize placeholder fields detected in the PDF, keyed by field name.
+   * - `fields`: place fields at explicit `x`/`y` positions on a given `page`.
+   *
+   * PDFGate creates a **new** document with the added fields (does not overwrite the original).
+   * This SDK always requests JSON and returns a `PdfGateDocument`.
+   *
+   * `preSignedUrlExpiresIn` is in **seconds** (min 60, max 86400).
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params - Options; includes `documentId`, optional `fieldOverrides`, `fields`, metadata, etc.
+   * @returns A `PdfGateDocument`.
+   */
+  async addFormFields(params: AddFormFieldsRequest): Promise<AddFormFieldsResponse> {
+    const payload = { ...params, jsonResponse: true };
+    const timeout = 3 * 60 * 1000; // 3 minutes
+    return this.api.post<PdfGateDocument>('/forms/fields', payload, undefined, timeout);
   }
 
   /**
@@ -402,5 +462,73 @@ export default class PdfGate {
    */
   getFile(params: GetFileRequest) {
     return this.api.get<Buffer>(`/file/${params.documentId}`);
+  }
+
+  /**
+   * Permanently delete a stored document.
+   *
+   * **Endpoint:** `DELETE /document/{documentId}`
+   *
+   * The document and its underlying stored file are removed. A document that is
+   * referenced by a draft or in-progress envelope cannot be deleted until those
+   * envelopes are completed or expired.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.documentId - The document ID to delete.
+   */
+  async deleteDocument(params: DeleteDocumentRequest): Promise<DeleteDocumentResponse> {
+    await this.api.delete<void>(`/document/${params.documentId}`);
+  }
+
+  /**
+   * Register a webhook endpoint to receive PDFGate event notifications.
+   *
+   * **Endpoint:** `POST /webhook`
+   *
+   * Provide:
+   * - `url` (a publicly accessible HTTPS URL; localhost is not supported)
+   * - `eventTypes` (the events to subscribe to)
+   * - `description` (optional)
+   *
+   * The response includes a `secret` (returned **only once**, at creation time)
+   * used to verify webhook payloads via {@link verifySignature}.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params - Webhook creation options.
+   * @returns The created `WebhookResponse`, including the signing `secret`.
+   */
+  async createWebhook(params: CreateWebhookRequest): Promise<CreateWebhookResponse> {
+    return this.api.post<WebhookResponse>('/webhook', params);
+  }
+
+  /**
+   * Retrieve a registered webhook by ID.
+   *
+   * **Endpoint:** `GET /webhook/{id}`
+   *
+   * The `secret` is not returned by this endpoint (only at creation time).
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The webhook ID to retrieve.
+   * @returns The `WebhookResponse`.
+   */
+  getWebhook(params: GetWebhookParams): Promise<GetWebhookResponse> {
+    return this.api.get<WebhookResponse>(`/webhook/${params.id}`);
+  }
+
+  /**
+   * Delete a registered webhook.
+   *
+   * **Endpoint:** `DELETE /webhook/{id}`
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The webhook ID to delete.
+   */
+  async deleteWebhook(params: DeleteWebhookParams): Promise<DeleteWebhookResponse> {
+    await this.api.delete<void>(`/webhook/${params.id}`);
   }
 }

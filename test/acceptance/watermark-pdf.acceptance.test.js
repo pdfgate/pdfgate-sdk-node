@@ -32,15 +32,12 @@ if (requireAcceptanceApiKey('watermarkPdf acceptance tests require PDFGATE_API_K
   });
 
   test('watermarkPdf error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.watermarkPdf({
-          documentId: 'missing-document-id',
-          type: 'text',
-          text: 'Acceptance watermark',
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.watermarkPdf({
+        documentId: 'missing-document-id',
+        type: 'text',
+        text: 'Acceptance watermark',
+      });
+    }, assertApiError);
   });
 }

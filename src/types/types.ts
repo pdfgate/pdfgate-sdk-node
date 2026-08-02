@@ -1,5 +1,5 @@
-import { PdfStandardFont } from './enums.js';
-import { PdfGateDocument, PdfGateEnvelope } from './interfaces.js';
+import { DocumentFieldType, PdfStandardFont, WebhookEventType } from './enums.js';
+import { PdfGateDocument, PdfGateEnvelope, WebhookResponse } from './interfaces.js';
 
 /**
  * A file payload sent to multipart endpoints.
@@ -30,11 +30,93 @@ export type UploadFileResponse = PdfGateDocument;
 
 export type FlattenPdfRequest = {
   documentId: string;
+  /**
+   * Names of the form fields to flatten. When provided, only these fields are
+   * flattened and the rest of the form stays interactive. When omitted, the
+   * whole document is flattened.
+   */
+  fieldNames?: string[];
   preSignedUrlExpiresIn?: number;
   metadata?: object;
 };
 
 export type FlattenPdfResponse = PdfGateDocument;
+
+export type DeleteDocumentRequest = {
+  documentId: string;
+};
+
+export type DeleteDocumentResponse = void;
+
+/**
+ * Overrides applied to placeholder fields detected in the PDF, keyed by field name.
+ */
+export type FieldOverride = {
+  options?: string[];
+  height?: number;
+  width?: number;
+  role?: string;
+  fontSize?: number;
+  autoFill?: boolean;
+  optional?: boolean;
+  description?: string;
+};
+
+/**
+ * A form field placed at an explicit position on a given page.
+ */
+export type ManualField = {
+  name: string;
+  type: DocumentFieldType;
+  page: number;
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+  value?: string;
+  options?: string[];
+  role?: string;
+  fontSize?: number;
+  autoFill?: boolean;
+  optional?: boolean;
+  description?: string;
+};
+
+export type AddFormFieldsRequest = {
+  documentId: string;
+  /**
+   * Overrides for placeholder fields detected in the PDF, keyed by field name.
+   */
+  fieldOverrides?: Record<string, FieldOverride>;
+  /**
+   * Fields to add at explicit positions on the document.
+   */
+  fields?: ManualField[];
+  preSignedUrlExpiresIn?: number;
+  metadata?: object;
+};
+
+export type AddFormFieldsResponse = PdfGateDocument;
+
+export type CreateWebhookRequest = {
+  url: string;
+  eventTypes: WebhookEventType[];
+  description?: string;
+};
+
+export type CreateWebhookResponse = WebhookResponse;
+
+export type GetWebhookParams = {
+  id: string;
+};
+
+export type GetWebhookResponse = WebhookResponse;
+
+export type DeleteWebhookParams = {
+  id: string;
+};
+
+export type DeleteWebhookResponse = void;
 
 export type CompressPdfRequest = {
   documentId: string;

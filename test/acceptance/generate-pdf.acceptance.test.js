@@ -1,10 +1,6 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const {
-  assertDocumentShape,
-  createClient,
-  requireAcceptanceApiKey,
-} = require('./helpers.js');
+const { assertDocumentShape, createClient, requireAcceptanceApiKey } = require('./helpers.js');
 
 if (requireAcceptanceApiKey('generatePdf acceptance tests require PDFGATE_API_KEY')) {
   const client = createClient();

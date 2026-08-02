@@ -27,14 +27,23 @@ if (requireAcceptanceApiKey('flattenPdf acceptance tests require PDFGATE_API_KEY
     });
   });
 
+  test('flattenPdf flattens only the specified fieldNames', async () => {
+    const doc = await client.flattenPdf({
+      documentId: fillablePdf.id,
+      fieldNames: ['fullName'],
+    });
+
+    assertDocumentShape(doc, {
+      type: 'flattened',
+      derivedFrom: fillablePdf.id,
+    });
+  });
+
   test('flattenPdf error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.flattenPdf({
-          documentId: 'missing-document-id',
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.flattenPdf({
+        documentId: 'missing-document-id',
+      });
+    }, assertApiError);
   });
 }

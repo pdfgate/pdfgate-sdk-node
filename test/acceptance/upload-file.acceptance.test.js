@@ -54,13 +54,10 @@ if (requireAcceptanceApiKey('uploadFile acceptance tests require PDFGATE_API_KEY
   });
 
   test('uploadFile error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.uploadFile({
-          url: 'not-a-valid-url',
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.uploadFile({
+        url: 'not-a-valid-url',
+      });
+    }, assertApiError);
   });
 }

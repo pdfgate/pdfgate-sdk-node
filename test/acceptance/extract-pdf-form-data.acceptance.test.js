@@ -27,13 +27,10 @@ if (requireAcceptanceApiKey('extractPdfFormData acceptance tests require PDFGATE
   });
 
   test('extractPdfFormData error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.extractPdfFormData({
-          documentId: 'missing-document-id',
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.extractPdfFormData({
+        documentId: 'missing-document-id',
+      });
+    }, assertApiError);
   });
 }
