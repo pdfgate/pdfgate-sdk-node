@@ -3,7 +3,6 @@ export enum DocumentStatus {
   PROCESSING = 'processing',
   EXPIRED = 'expired',
   FAILED = 'failed',
-  DELETED = 'deleted',
 }
 
 export enum DocumentType {
