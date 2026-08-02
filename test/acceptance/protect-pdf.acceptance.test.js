@@ -34,13 +34,10 @@ if (requireAcceptanceApiKey('protectPdf acceptance tests require PDFGATE_API_KEY
   });
 
   test('protectPdf error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.protectPdf({
-          documentId: 'missing-document-id',
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.protectPdf({
+        documentId: 'missing-document-id',
+      });
+    }, assertApiError);
   });
 }

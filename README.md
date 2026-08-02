@@ -2,7 +2,7 @@
 
 Official npm package for using the [PDFGate](https://pdfgate.com) API from Node.js and TypeScript applications.
 
-Use `pdfgate` to generate PDFs from HTML or URLs, upload stored PDFs, create signing envelopes, verify webhooks, and run PDF operations such as flattening, compression, watermarking, encryption, and form-data extraction.
+Use `pdfgate` to generate PDFs from HTML or URLs, upload and delete stored PDFs, create signing envelopes, manage and verify webhooks, and run PDF operations such as flattening, adding form fields, compression, watermarking, encryption, and form-data extraction.
 
 📘 Documentation: https://pdfgate.com/documentation  
 🔑 Dashboard & API keys: https://dashboard.pdfgate.com
@@ -19,6 +19,7 @@ Use `pdfgate` to generate PDFs from HTML or URLs, upload stored PDFs, create sig
 - [Response objects](#response-objects)
 - [Examples](#examples)
 - [Envelope signing workflows](#envelope-signing-workflows)
+- [Managing webhooks](#managing-webhooks)
 - [Webhook signature verification](#webhook-signature-verification)
 - [Development](#development)
 - [Publishing](#publishing)
@@ -108,17 +109,22 @@ PDF processing methods return a typed `PdfGateDocument` object:
 - `generatePdf`
 - `uploadFile`
 - `flattenPdf`
+- `addFormFields`
 - `compressPdf`
 - `watermarkPdf`
 - `protectPdf`
 
 The SDK sends `jsonResponse: true` internally for processing endpoints that require it. You do not need to pass that flag yourself.
 
+`deleteDocument` returns `void`.
+
 Envelope methods return `PdfGateEnvelope` objects:
 
 - `createEnvelope`
 - `sendEnvelope`
 - `getEnvelope`
+
+Webhook management methods (`createWebhook`, `getWebhook`) return a `WebhookResponse` object; `deleteWebhook` returns `void`.
 
 ```ts
 const doc = await client.generatePdf({
@@ -221,10 +227,53 @@ fs.writeFileSync('out.pdf', file);
 ```ts
 const doc = await client.flattenPdf({
   documentId: 'DOCUMENT_ID',
+  // Optional: flatten only these fields and leave the rest interactive.
+  // Omit fieldNames to flatten the whole document.
+  fieldNames: ['signature', 'date'],
 });
 
 console.log(doc);
 ```
+
+---
+
+### Add form fields to a PDF
+
+```ts
+import { DocumentFieldType } from 'pdfgate';
+
+const doc = await client.addFormFields({
+  documentId: 'DOCUMENT_ID',
+  // Customize placeholder fields detected in the PDF, keyed by field name.
+  fieldOverrides: {
+    signature: { role: 'signer', optional: false },
+  },
+  // Or place fields at explicit positions on a given page.
+  fields: [
+    {
+      name: 'signed_on',
+      type: DocumentFieldType.DATE,
+      page: 1,
+      x: 100,
+      y: 650,
+      width: 160,
+      height: 24,
+    },
+  ],
+});
+
+console.log(doc);
+```
+
+---
+
+### Delete a stored document
+
+```ts
+await client.deleteDocument({ documentId: 'DOCUMENT_ID' });
+```
+
+A document referenced by a draft or in-progress envelope cannot be deleted until those envelopes are completed or expired.
 
 ---
 
@@ -353,6 +402,34 @@ const envelope = await client.getEnvelope({
 
 console.log(envelope.id, envelope.status);
 ```
+
+---
+
+## Managing webhooks
+
+Register, retrieve, and delete webhook endpoints that receive PDFGate event notifications.
+
+```ts
+import { WebhookEventType } from 'pdfgate';
+
+// Create a webhook. The returned `secret` is shown only once — store it now.
+const webhook = await client.createWebhook({
+  url: 'https://example.com/pdfgate-callback',
+  eventTypes: [WebhookEventType.ENVELOPE_COMPLETED, WebhookEventType.ENVELOPE_SENT],
+  description: 'Production signing events',
+});
+
+console.log(webhook.id, webhook.secret);
+
+// Retrieve a webhook (the secret is not returned here).
+const fetched = await client.getWebhook({ id: webhook.id });
+console.log(fetched.status);
+
+// Delete a webhook.
+await client.deleteWebhook({ id: webhook.id });
+```
+
+The subscribable events are exposed via the `WebhookEventType` enum: `ENVELOPE_SENT`, `ENVELOPE_COMPLETED`, `ENVELOPE_EXPIRED`, and `ENVELOPE_DOCUMENT_COMPLETED`. The webhook URL must be publicly accessible (localhost is not supported).
 
 ---
 

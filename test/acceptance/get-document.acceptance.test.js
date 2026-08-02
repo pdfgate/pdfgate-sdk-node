@@ -27,13 +27,10 @@ if (requireAcceptanceApiKey('getDocument acceptance tests require PDFGATE_API_KE
   });
 
   test('getDocument error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.getDocument({
-          id: 'missing-document-id',
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.getDocument({
+        id: 'missing-document-id',
+      });
+    }, assertApiError);
   });
 }

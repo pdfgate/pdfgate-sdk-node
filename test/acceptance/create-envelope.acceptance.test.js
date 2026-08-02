@@ -29,25 +29,22 @@ if (requireAcceptanceApiKey('createEnvelope acceptance tests require PDFGATE_API
   });
 
   test('createEnvelope error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.createEnvelope({
-          requesterName: 'PDFGate Node SDK Acceptance Tests',
-          documents: [
-            {
-              sourceDocumentId: 'missing-document-id',
-              name: 'Missing Document',
-              recipients: [
-                {
-                  email: 'anna@example.com',
-                  name: 'Anna Smith',
-                },
-              ],
-            },
-          ],
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.createEnvelope({
+        requesterName: 'PDFGate Node SDK Acceptance Tests',
+        documents: [
+          {
+            sourceDocumentId: 'missing-document-id',
+            name: 'Missing Document',
+            recipients: [
+              {
+                email: 'anna@example.com',
+                name: 'Anna Smith',
+              },
+            ],
+          },
+        ],
+      });
+    }, assertApiError);
   });
 }

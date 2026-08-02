@@ -29,13 +29,10 @@ if (requireAcceptanceApiKey('compressPdf acceptance tests require PDFGATE_API_KE
   });
 
   test('compressPdf error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.compressPdf({
-          documentId: 'missing-document-id',
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.compressPdf({
+        documentId: 'missing-document-id',
+      });
+    }, assertApiError);
   });
 }

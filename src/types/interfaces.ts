@@ -8,6 +8,8 @@ import {
   EnvelopeStatus,
   EmulateMediaType,
   FileOrientation,
+  WebhookEventType,
+  WebhookStatus,
 } from './enums.js';
 
 export interface GetDocumentRequest {
@@ -42,11 +44,46 @@ export interface WebhookEvent {
   data: Record<string, any>;
 }
 
+export interface WebhookResponse {
+  id: string;
+  url: string;
+  eventTypes: WebhookEventType[];
+  status: WebhookStatus;
+  description?: string;
+  /**
+   * The signing secret used to verify webhook payloads. Only returned once,
+   * when the webhook is created.
+   */
+  secret?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
 export interface EnvelopeFieldResponse {
   name: string;
   type: DocumentFieldType;
   value?: any;
   checked?: boolean;
+  /**
+   * IANA timezone identifier for the stored `value`. For `datetime` fields the
+   * `value` is normalized to UTC, so this is `"UTC"` once a value is captured.
+   */
+  timezone?: string;
+  /**
+   * Where the value originated: `"server"` for auto-filled fields or `"user"`
+   * for values submitted by the recipient.
+   */
+  source?: string;
+  /**
+   * The original value exactly as submitted by the recipient, before any
+   * UTC normalization (populated for `datetime` fields).
+   */
+  userValue?: string;
+  /**
+   * The IANA timezone the recipient submitted `userValue` in (populated for
+   * `datetime` fields).
+   */
+  userTimezone?: string;
 }
 
 export interface EnvelopeRecipientResponse {

@@ -107,6 +107,16 @@ export class HttpClient {
     });
   }
 
+  async delete<T>(path: string, timeout?: number): Promise<T> {
+    const url = new URL(this.config.apiUrl + path);
+
+    return this.request<T>({
+      method: 'DELETE',
+      baseUrl: url,
+      timeout,
+    });
+  }
+
   private request<T>(params: HttpRequestParams): Promise<T> {
     let headers: Record<string, any> = {
       'Content-Type': `application/json`,

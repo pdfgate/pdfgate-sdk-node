@@ -1,5 +1,10 @@
-import PdfGate, { verifySignature } from '../../src/index.js';
-import { PdfGateDocument, PdfGateEnvelope, WebhookEvent } from '../../src/types/index.js';
+import PdfGate, { DocumentFieldType, verifySignature, WebhookEventType } from '../../src/index.js';
+import {
+  PdfGateDocument,
+  PdfGateEnvelope,
+  WebhookEvent,
+  WebhookResponse,
+} from '../../src/types/index.js';
 
 const client = new PdfGate('test_api_key');
 
@@ -41,6 +46,32 @@ const sendEnvelopePromise: Promise<PdfGateEnvelope> = client.sendEnvelope({
 const getEnvelopePromise: Promise<PdfGateEnvelope> = client.getEnvelope({
   id: 'env_1',
 });
+const flattenFieldNamesPromise: Promise<PdfGateDocument> = client.flattenPdf({
+  documentId: 'doc_1',
+  fieldNames: ['name', 'email'],
+});
+const addFormFieldsPromise: Promise<PdfGateDocument> = client.addFormFields({
+  documentId: 'doc_1',
+  fieldOverrides: { signature: { role: 'signer' } },
+  fields: [
+    {
+      name: 'date',
+      type: DocumentFieldType.DATE,
+      page: 1,
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 30,
+    },
+  ],
+});
+const deleteDocumentPromise: Promise<void> = client.deleteDocument({ documentId: 'doc_1' });
+const createWebhookPromise: Promise<WebhookResponse> = client.createWebhook({
+  url: 'https://example.com/hook',
+  eventTypes: [WebhookEventType.ENVELOPE_COMPLETED],
+});
+const getWebhookPromise: Promise<WebhookResponse> = client.getWebhook({ id: 'wh_1' });
+const deleteWebhookPromise: Promise<void> = client.deleteWebhook({ id: 'wh_1' });
 
 void generatePromise;
 void flattenPromise;
@@ -50,6 +81,12 @@ void protectPromise;
 void createEnvelopePromise;
 void sendEnvelopePromise;
 void getEnvelopePromise;
+void flattenFieldNamesPromise;
+void addFormFieldsPromise;
+void deleteDocumentPromise;
+void createWebhookPromise;
+void getWebhookPromise;
+void deleteWebhookPromise;
 const verifyResult: WebhookEvent = verifySignature(
   'whsecret_test',
   't=1,v1=abcd',
@@ -85,3 +122,5 @@ client.createEnvelope({
   // @ts-expect-error jsonResponse must not be part of public API.
   jsonResponse: true,
 });
+// @ts-expect-error jsonResponse must not be part of public API.
+client.addFormFields({ documentId: 'doc_1', jsonResponse: true });

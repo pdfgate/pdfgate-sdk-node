@@ -13,9 +13,13 @@ export enum DocumentType {
   ENCRYPTED = 'encrypted',
   COMPRESSED = 'compressed',
   SIGNED = 'signed',
+  SIGNATURE_AUDIT_LOG = 'signature_audit_log',
+  DOCUMENT_FIELDS_ADDED = 'document_fields_added',
+  SIGNING_TEMPLATE = 'signing_template',
 }
 
 export enum EnvelopeStatus {
+  DRAFT = 'draft',
   CREATED = 'created',
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
@@ -24,6 +28,7 @@ export enum EnvelopeStatus {
 
 export enum EnvelopeDocumentStatus {
   PENDING = 'pending',
+  EXPIRED = 'expired',
   SENT_FOR_SIGNING = 'sent_for_signing',
   SIGNING_IN_PROGRESS = 'signing_in_progress',
   SIGNING_FAILED = 'signing_failed',
@@ -32,7 +37,23 @@ export enum EnvelopeDocumentStatus {
 
 export enum DocumentRecipientStatus {
   PENDING = 'pending',
+  EXPIRED = 'expired',
   SIGNED = 'signed',
+}
+
+export enum WebhookStatus {
+  ACTIVE = 'active',
+  DISABLED = 'disabled',
+}
+
+/**
+ * Events that a webhook can subscribe to.
+ */
+export enum WebhookEventType {
+  ENVELOPE_SENT = 'envelope.sent',
+  ENVELOPE_COMPLETED = 'envelope.completed',
+  ENVELOPE_EXPIRED = 'envelope.expired',
+  ENVELOPE_DOCUMENT_COMPLETED = 'envelope.document.completed',
 }
 
 export enum DocumentFieldType {

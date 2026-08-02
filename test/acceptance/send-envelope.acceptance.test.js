@@ -32,13 +32,10 @@ if (requireAcceptanceApiKey('sendEnvelope acceptance tests require PDFGATE_API_K
   });
 
   test('sendEnvelope error includes statusCode, responseBody and cause', async () => {
-    await assert.rejects(
-      async () => {
-        await client.sendEnvelope({
-          id: 'missing-envelope-id',
-        });
-      },
-      assertApiError
-    );
+    await assert.rejects(async () => {
+      await client.sendEnvelope({
+        id: 'missing-envelope-id',
+      });
+    }, assertApiError);
   });
 }
