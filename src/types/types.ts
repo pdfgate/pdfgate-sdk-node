@@ -181,6 +181,11 @@ export type CreateEnvelopeParams = {
   documents: EnvelopeDocument[];
   requesterName: string;
   metadata?: object;
+  /**
+   * Days until the envelope and its signing links expire, counted from creation
+   * (min 1, max 90). Defaults to the account's envelope expiration setting.
+   */
+  expiresInDays?: number;
 };
 
 export type CreateEnvelopeResponse = PdfGateEnvelope;
@@ -196,3 +201,20 @@ export type GetEnvelopeParams = {
 };
 
 export type GetEnvelopeResponse = PdfGateEnvelope;
+
+export type VoidEnvelopeParams = {
+  id: string;
+  /**
+   * Reason for voiding (max 500 characters). Visible to recipients: included in
+   * the cancellation email sent to recipients who had not signed yet.
+   */
+  reason?: string;
+};
+
+export type VoidEnvelopeResponse = PdfGateEnvelope;
+
+export type DeleteEnvelopeParams = {
+  id: string;
+};
+
+export type DeleteEnvelopeResponse = void;

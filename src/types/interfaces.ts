@@ -110,8 +110,12 @@ export interface PdfGateEnvelope {
   status: EnvelopeStatus;
   documents: EnvelopeDocumentResponse[];
   createdAt: Date;
+  /** When the envelope will expire if it is not completed. */
+  expiresAt?: Date;
   completedAt?: Date;
   expiredAt?: Date;
+  voidedAt?: Date;
+  voidReason?: string;
   metadata?: object;
 }
 

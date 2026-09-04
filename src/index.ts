@@ -28,6 +28,10 @@ import {
   GeneratePdfResponse,
   GetEnvelopeParams,
   GetEnvelopeResponse,
+  VoidEnvelopeParams,
+  VoidEnvelopeResponse,
+  DeleteEnvelopeParams,
+  DeleteEnvelopeResponse,
   GetWebhookParams,
   GetWebhookResponse,
   ProtectPdfRequest,
@@ -59,6 +63,10 @@ export type {
   FlattenPdfResponse,
   GetEnvelopeParams,
   GetEnvelopeResponse,
+  VoidEnvelopeParams,
+  VoidEnvelopeResponse,
+  DeleteEnvelopeParams,
+  DeleteEnvelopeResponse,
   GetWebhookParams,
   GetWebhookResponse,
   ManualField,
@@ -402,6 +410,48 @@ export default class PdfGate {
    */
   getEnvelope(params: GetEnvelopeParams): Promise<GetEnvelopeResponse> {
     return this.api.get<PdfGateEnvelope>(`/envelope/${params.id}`);
+  }
+
+  /**
+   * Void (cancel) an envelope in `created` or `in_progress` status.
+   *
+   * **Endpoint:** `POST /envelope/{id}/void`
+   *
+   * Recipients who have not signed yet are notified by email and their signing
+   * links stop working. Documents already signed by all recipients are not
+   * affected. The optional `reason` is visible to recipients. This action
+   * cannot be undone.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The envelope ID to void.
+   * @param params.reason - Optional reason, included in the cancellation email.
+   * @returns The updated `PdfGateEnvelope` with `voided` status.
+   */
+  async voidEnvelope(params: VoidEnvelopeParams): Promise<VoidEnvelopeResponse> {
+    return this.api.post<PdfGateEnvelope>(
+      `/envelope/${params.id}/void`,
+      params.reason ? { reason: params.reason } : {},
+    );
+  }
+
+  /**
+   * Permanently delete an envelope and the files it produced.
+   *
+   * **Endpoint:** `DELETE /envelope/{id}`
+   *
+   * The signed documents and audit logs are removed from storage, recipient
+   * data is anonymized, and recipients lose access. Source documents are not
+   * deleted. Only envelopes in `draft`, `completed`, `expired`, or `voided`
+   * status can be deleted — void an active envelope first. This action cannot
+   * be undone.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The envelope ID to delete.
+   */
+  async deleteEnvelope(params: DeleteEnvelopeParams): Promise<DeleteEnvelopeResponse> {
+    await this.api.delete<void>(`/envelope/${params.id}`);
   }
 
   /**
