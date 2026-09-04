@@ -353,6 +353,76 @@ test('addFormFields posts fieldOverrides and fields to the forms/fields endpoint
   assert.equal(requestBody.jsonResponse, true);
 });
 
+test('voidEnvelope posts the reason to the envelope void endpoint and returns the envelope response', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'env_123',
+        status: 'voided',
+        voidedAt: '2026-01-02T00:00:00.000Z',
+        voidReason: 'Contract terms changed',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        documents: [],
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.voidEnvelope({
+        id: 'env_123',
+        reason: 'Contract terms changed',
+      });
+
+      capturedRequest = getRequest();
+      assert.equal(response.id, 'env_123');
+      assert.equal(response.status, 'voided');
+      assert.equal(response.voidReason, 'Contract terms changed');
+    }
+  );
+
+  const requestBody = JSON.parse(capturedRequest.writtenBody());
+  assert.equal(capturedRequest.options.method, 'POST');
+  assert.equal(capturedRequest.options.path, '/envelope/env_123/void');
+  assert.equal(requestBody.reason, 'Contract terms changed');
+});
+
+test('voidEnvelope sends an empty body when no reason is provided', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: 'env_123', status: 'voided', createdAt: '2026-01-01T00:00:00.000Z', documents: [] }),
+    },
+    async (getRequest) => {
+      await client.voidEnvelope({ id: 'env_123' });
+      capturedRequest = getRequest();
+    }
+  );
+
+  assert.equal(capturedRequest.options.method, 'POST');
+  assert.equal(capturedRequest.options.path, '/envelope/env_123/void');
+  assert.deepEqual(JSON.parse(capturedRequest.writtenBody()), {});
+});
+
+test('deleteEnvelope sends a DELETE request to the envelope endpoint', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse({ statusCode: 200, headers: {}, body: '' }, async (getRequest) => {
+    const response = await client.deleteEnvelope({ id: 'env_123' });
+    capturedRequest = getRequest();
+    assert.equal(response, undefined);
+  });
+
+  assert.equal(capturedRequest.options.method, 'DELETE');
+  assert.equal(capturedRequest.options.path, '/envelope/env_123');
+  assert.equal(capturedRequest.writtenBody(), '');
+});
+
 test('deleteDocument sends a DELETE request to the document endpoint', async () => {
   const client = new PdfGate('test_api_key');
   let capturedRequest = null;

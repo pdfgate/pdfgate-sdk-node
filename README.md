@@ -123,6 +123,9 @@ Envelope methods return `PdfGateEnvelope` objects:
 - `createEnvelope`
 - `sendEnvelope`
 - `getEnvelope`
+- `voidEnvelope`
+
+`deleteEnvelope` returns `void`.
 
 Webhook management methods (`createWebhook`, `getWebhook`) return a `WebhookResponse` object; `deleteWebhook` returns `void`.
 
@@ -377,7 +380,11 @@ console.log(envelope.id, envelope.status);
 Recipient reminder settings are optional:
 
 - `reminderIntervalDays` controls how many days PDFGate waits between reminder emails.
-- `reminderAttempts` controls how many reminders should be sent to the recipient.
+- `reminderAttempts` controls how many reminders should be sent to the recipient (min 1, max 10, defaults to 5).
+
+Envelope expiration is optional:
+
+- `expiresInDays` controls how many days until the envelope and its signing links expire, counted from creation (min 1, max 90). Defaults to the account's envelope expiration setting.
 
 ---
 
@@ -401,6 +408,31 @@ const envelope = await client.getEnvelope({
 });
 
 console.log(envelope.id, envelope.status);
+```
+
+---
+
+### Void an envelope
+
+Cancel an envelope in `created` or `in_progress` status. Recipients who have not signed are notified by email and their signing links stop working; documents already signed by all recipients are not affected.
+
+```ts
+const envelope = await client.voidEnvelope({
+  id: 'ENVELOPE_ID',
+  reason: 'Contract terms changed', // optional, visible to recipients
+});
+
+console.log(envelope.status); // "voided"
+```
+
+---
+
+### Delete an envelope
+
+Permanently delete an envelope and the files it produced (signed documents and audit logs). Recipient data is anonymized and recipients lose access; source documents are not deleted. Only envelopes in `draft`, `completed`, `expired`, or `voided` status can be deleted — void an active envelope first.
+
+```ts
+await client.deleteEnvelope({ id: 'ENVELOPE_ID' });
 ```
 
 ---

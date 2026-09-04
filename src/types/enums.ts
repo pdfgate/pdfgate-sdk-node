@@ -24,11 +24,13 @@ export enum EnvelopeStatus {
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
   EXPIRED = 'expired',
+  VOIDED = 'voided',
 }
 
 export enum EnvelopeDocumentStatus {
   PENDING = 'pending',
   EXPIRED = 'expired',
+  VOIDED = 'voided',
   SENT_FOR_SIGNING = 'sent_for_signing',
   SIGNING_IN_PROGRESS = 'signing_in_progress',
   SIGNING_FAILED = 'signing_failed',
@@ -38,6 +40,7 @@ export enum EnvelopeDocumentStatus {
 export enum DocumentRecipientStatus {
   PENDING = 'pending',
   EXPIRED = 'expired',
+  VOIDED = 'voided',
   SIGNED = 'signed',
 }
 
@@ -53,6 +56,9 @@ export enum WebhookEventType {
   ENVELOPE_SENT = 'envelope.sent',
   ENVELOPE_COMPLETED = 'envelope.completed',
   ENVELOPE_EXPIRED = 'envelope.expired',
+  ENVELOPE_VOIDED = 'envelope.voided',
+  ENVELOPE_DELETED = 'envelope.deleted',
+  ENVELOPE_RECIPIENT_SIGNED = 'envelope.recipient.signed',
   ENVELOPE_DOCUMENT_COMPLETED = 'envelope.document.completed',
 }
 
