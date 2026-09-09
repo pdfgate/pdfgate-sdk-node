@@ -127,6 +127,10 @@ Envelope methods return `PdfGateEnvelope` objects:
 
 `deleteEnvelope` returns `void`.
 
+`createEmbedLink` returns an `EmbedLinkResponse` with the signing `url` and its `expiresAt`.
+
+Recipient methods (`createRecipient`, `getRecipient`, `updateRecipient`) return a `PdfGateRecipient` object; `listRecipients` returns an object with a `recipients` array.
+
 Webhook management methods (`createWebhook`, `getWebhook`) return a `WebhookResponse` object; `deleteWebhook` returns `void`.
 
 ```ts
@@ -433,6 +437,83 @@ Permanently delete an envelope and the files it produced (signed documents and a
 
 ```ts
 await client.deleteEnvelope({ id: 'ENVELOPE_ID' });
+```
+
+---
+
+### Embedded signing
+
+Recipients marked `embedded` sign inside your own application instead of the hosted signing UI, and receive no emails from PDFGate. After sending the envelope, create a short-lived signing link and render it in an iframe.
+
+```ts
+const envelope = await client.createEnvelope({
+  requesterName: 'John Doe',
+  documents: [
+    {
+      sourceDocumentId: 'DOCUMENT_ID',
+      name: 'Employment Agreement',
+      recipients: [
+        {
+          email: 'anna@example.com',
+          name: 'Anna Smith',
+          role: 'signer',
+          embedded: true,
+        },
+      ],
+    },
+  ],
+});
+
+await client.sendEnvelope({ id: envelope.id });
+
+const link = await client.createEmbedLink({
+  id: envelope.id,
+  documentId: 'DOCUMENT_ID',
+  recipientId: envelope.documents[0].recipients[0].recipientId!,
+  returnUrl: 'https://yourapp.com/signing/done',
+});
+
+console.log(link.url, link.expiresAt);
+```
+
+The envelope must be in `in_progress` status and the link expires after 10 minutes, so create it when the signer is ready (one link per signing session). When the session ends the iframe redirects to `returnUrl` with `event` (`signing_complete`, `voided`, `expired`, or `not_found`), `envelopeId`, `documentId`, and `recipientId` appended as query parameters.
+
+---
+
+### Manage recipients
+
+Store recipients in your account and reference them by `recipientId` when creating envelopes, as an alternative to passing `email` and `name` inline. Emails are not unique; every `createRecipient` call creates a new recipient, so list existing recipients first when reuse is intended.
+
+```ts
+const recipient = await client.createRecipient({
+  email: 'anna@example.com',
+  name: 'Anna Smith',
+  metadata: { customerId: 'cus_123' },
+});
+
+const { recipients } = await client.listRecipients({ email: 'anna@example.com' });
+
+const fetched = await client.getRecipient({ id: recipient.id });
+
+const updated = await client.updateRecipient({
+  id: recipient.id,
+  name: 'Anna Smith-Jones',
+});
+```
+
+The recipient email cannot be changed after creation. Updating a recipient does not affect existing envelopes; they keep the recipient name they were created with.
+
+```ts
+const envelope = await client.createEnvelope({
+  requesterName: 'John Doe',
+  documents: [
+    {
+      sourceDocumentId: 'DOCUMENT_ID',
+      name: 'Employment Agreement',
+      recipients: [{ recipientId: recipient.id, role: 'signer' }],
+    },
+  ],
+});
 ```
 
 ---

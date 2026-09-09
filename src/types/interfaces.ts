@@ -87,6 +87,8 @@ export interface EnvelopeFieldResponse {
 }
 
 export interface EnvelopeRecipientResponse {
+  /** ID of the stored recipient linked to this envelope recipient. */
+  recipientId?: string;
   email: string;
   status: DocumentRecipientStatus;
   signedAt?: Date;
@@ -117,6 +119,24 @@ export interface PdfGateEnvelope {
   voidedAt?: Date;
   voidReason?: string;
   metadata?: object;
+}
+
+export interface PdfGateRecipient {
+  id: string;
+  email?: string;
+  name?: string;
+  metadata?: object;
+  createdAt: Date;
+  updatedAt?: Date;
+  /** Last time the recipient was referenced by an envelope. */
+  lastUsedAt?: Date;
+}
+
+export interface EmbedLinkResponse {
+  /** Signing URL to render inside your application. */
+  url: string;
+  /** When the link expires. Links are valid for 10 minutes. */
+  expiresAt: Date;
 }
 
 export interface GeneratePdfRequest {

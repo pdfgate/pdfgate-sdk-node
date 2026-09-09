@@ -6,7 +6,7 @@ export interface HttpClientConfig {
 }
 
 export interface HttpRequestParams {
-  method: 'GET' | 'POST' | 'DELETE';
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   baseUrl: URL;
   contentType?: ContentType;
   body?: any;

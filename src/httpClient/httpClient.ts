@@ -107,6 +107,17 @@ export class HttpClient {
     });
   }
 
+  async patch<T>(path: string, body?: any, timeout?: number): Promise<T> {
+    const url = new URL(this.config.apiUrl + path);
+
+    return this.request<T>({
+      method: 'PATCH',
+      baseUrl: url,
+      timeout,
+      body,
+    });
+  }
+
   async delete<T>(path: string, timeout?: number): Promise<T> {
     const url = new URL(this.config.apiUrl + path);
 
