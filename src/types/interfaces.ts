@@ -90,6 +90,8 @@ export interface EnvelopeRecipientResponse {
   /** ID of the stored recipient linked to this envelope recipient. */
   recipientId?: string;
   email: string;
+  /** Whether the recipient signs through embedded signing. Embedded recipients receive no emails and have no signingLink. */
+  embedded: boolean;
   status: DocumentRecipientStatus;
   signedAt?: Date;
   viewedAt?: Date;
