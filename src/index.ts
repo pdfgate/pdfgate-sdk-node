@@ -16,6 +16,10 @@ import {
   AddFormFieldsResponse,
   CompressPdfRequest,
   CompressPdfResponse,
+  CreateEmbedLinkParams,
+  CreateEmbedLinkResponse,
+  CreateRecipientParams,
+  CreateRecipientResponse,
   CreateWebhookRequest,
   CreateWebhookResponse,
   DeleteDocumentRequest,
@@ -32,24 +36,34 @@ import {
   VoidEnvelopeResponse,
   DeleteEnvelopeParams,
   DeleteEnvelopeResponse,
+  GetRecipientParams,
+  GetRecipientResponse,
   GetWebhookParams,
   GetWebhookResponse,
+  ListRecipientsParams,
+  ListRecipientsResponse,
   ProtectPdfRequest,
   ProtectPdfResponse,
   SendEnvelopeParams,
   SendEnvelopeResponse,
+  UpdateRecipientParams,
+  UpdateRecipientResponse,
   UploadFileRequest,
   UploadFileResponse,
   WatermarkPdfRequest,
   WatermarkPdfResponse,
 } from './types/types.js';
-import { WebhookResponse } from './types/interfaces.js';
+import { EmbedLinkResponse, PdfGateRecipient, WebhookResponse } from './types/interfaces.js';
 
 export type {
   AddFormFieldsRequest,
   AddFormFieldsResponse,
+  CreateEmbedLinkParams,
+  CreateEmbedLinkResponse,
   CreateEnvelopeParams,
   CreateEnvelopeResponse,
+  CreateRecipientParams,
+  CreateRecipientResponse,
   CreateWebhookRequest,
   CreateWebhookResponse,
   DeleteDocumentRequest,
@@ -63,19 +77,27 @@ export type {
   FlattenPdfResponse,
   GetEnvelopeParams,
   GetEnvelopeResponse,
+  GetRecipientParams,
+  GetRecipientResponse,
   VoidEnvelopeParams,
   VoidEnvelopeResponse,
   DeleteEnvelopeParams,
   DeleteEnvelopeResponse,
   GetWebhookParams,
   GetWebhookResponse,
+  ListRecipientsParams,
+  ListRecipientsResponse,
   ManualField,
   SendEnvelopeParams,
   SendEnvelopeResponse,
+  UpdateRecipientParams,
+  UpdateRecipientResponse,
 } from './types/types.js';
 
 export type {
   PdfGateEnvelope,
+  PdfGateRecipient,
+  EmbedLinkResponse,
   EnvelopeDocumentResponse,
   EnvelopeRecipientResponse,
   EnvelopeFieldResponse,
@@ -368,6 +390,10 @@ export default class PdfGate {
    * - `requesterName` (who or what system created the envelope)
    * - `documents` (source documents + recipients for each document)
    *
+   * Each recipient is given either as `email` and `name` or as the
+   * `recipientId` of a stored recipient. Recipients marked `embedded` sign
+   * inside your application via {@link createEmbedLink} and receive no emails.
+   *
    * The SDK forwards the payload as-is, preserving the API's camelCase wire format,
    * and returns the envelope JSON response.
    *
@@ -386,6 +412,8 @@ export default class PdfGate {
    * **Endpoint:** `POST /envelope/{id}/send`
    *
    * This triggers PDFGate's recipient emails, secure signing links, and OTP verification flow.
+   * Embedded recipients receive no email; create their signing links with
+   * {@link createEmbedLink} after sending.
    *
    * @see https://pdfgate.com/documentation
    *
@@ -452,6 +480,102 @@ export default class PdfGate {
    */
   async deleteEnvelope(params: DeleteEnvelopeParams): Promise<DeleteEnvelopeResponse> {
     await this.api.delete<void>(`/envelope/${params.id}`);
+  }
+
+  /**
+   * Create a short-lived signing link for an embedded recipient.
+   *
+   * **Endpoint:** `POST /envelope/{id}/embed-link`
+   *
+   * Render the returned URL in an iframe inside your application. The envelope
+   * must be in `in_progress` status and the link expires after 10 minutes, so
+   * create it when the signer is ready (one link per signing session). When the
+   * session ends the iframe redirects to `returnUrl` with `event`
+   * (`signing_complete`, `voided`, `expired` or `not_found`), `envelopeId`,
+   * `documentId` and `recipientId` appended as query parameters; existing
+   * `returnUrl` query parameters are preserved.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The envelope ID.
+   * @param params.documentId - The envelope document ID (`sourceDocumentId`).
+   * @param params.recipientId - The recipient ID of the embedded recipient.
+   * @param params.returnUrl - URL the signing session redirects to when it ends.
+   * @returns An `EmbedLinkResponse` with the signing `url` and its `expiresAt`.
+   */
+  async createEmbedLink(params: CreateEmbedLinkParams): Promise<CreateEmbedLinkResponse> {
+    const { id, ...body } = params;
+    return this.api.post<EmbedLinkResponse>(`/envelope/${id}/embed-link`, body);
+  }
+
+  /**
+   * Store a recipient in your account so envelopes can reference them by
+   * `recipientId`.
+   *
+   * **Endpoint:** `POST /recipient`
+   *
+   * Emails are not unique; every call creates a new recipient. List existing
+   * recipients first when reuse is intended.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.email - Recipient email. Stored lowercased and cannot be changed later.
+   * @param params.name - Optional recipient name.
+   * @param params.metadata - Optional custom key/value metadata.
+   * @returns The created `PdfGateRecipient`.
+   */
+  async createRecipient(params: CreateRecipientParams): Promise<CreateRecipientResponse> {
+    return this.api.post<PdfGateRecipient>('/recipient', params);
+  }
+
+  /**
+   * List stored recipients with the given email.
+   *
+   * **Endpoint:** `GET /recipients`
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.email - Email to look up (case-insensitive).
+   * @returns An object with the matching `recipients`.
+   */
+  listRecipients(params: ListRecipientsParams): Promise<ListRecipientsResponse> {
+    return this.api.get<ListRecipientsResponse>(
+      `/recipients?email=${encodeURIComponent(params.email)}`,
+    );
+  }
+
+  /**
+   * Retrieve a stored recipient by ID.
+   *
+   * **Endpoint:** `GET /recipient/{id}`
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The recipient ID.
+   * @returns The `PdfGateRecipient`.
+   */
+  getRecipient(params: GetRecipientParams): Promise<GetRecipientResponse> {
+    return this.api.get<PdfGateRecipient>(`/recipient/${params.id}`);
+  }
+
+  /**
+   * Update a stored recipient's name or metadata.
+   *
+   * **Endpoint:** `PATCH /recipient/{id}`
+   *
+   * The email cannot be changed. Existing envelopes are not affected; they
+   * keep the recipient name they were created with.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The recipient ID.
+   * @param params.name - New recipient name.
+   * @param params.metadata - Replacement custom key/value metadata.
+   * @returns The updated `PdfGateRecipient`.
+   */
+  async updateRecipient(params: UpdateRecipientParams): Promise<UpdateRecipientResponse> {
+    const { id, ...body } = params;
+    return this.api.patch<PdfGateRecipient>(`/recipient/${id}`, body);
   }
 
   /**

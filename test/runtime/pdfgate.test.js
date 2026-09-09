@@ -423,6 +423,230 @@ test('deleteEnvelope sends a DELETE request to the envelope endpoint', async () 
   assert.equal(capturedRequest.writtenBody(), '');
 });
 
+test('createEnvelope forwards recipientId and embedded and surfaces recipientId in the response', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'env_123',
+        status: 'created',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        documents: [
+          {
+            sourceDocumentId: 'doc_123',
+            status: 'pending',
+            recipients: [
+              {
+                recipientId: 'rec_123',
+                email: 'anna@example.com',
+                status: 'pending',
+                fields: [],
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.createEnvelope({
+        requesterName: 'John Doe',
+        documents: [
+          {
+            sourceDocumentId: 'doc_123',
+            name: 'Agreement',
+            recipients: [{ recipientId: 'rec_123', role: 'signer', embedded: true }],
+          },
+        ],
+      });
+
+      capturedRequest = getRequest();
+      assert.equal(response.documents[0].recipients[0].recipientId, 'rec_123');
+    }
+  );
+
+  const requestBody = JSON.parse(capturedRequest.writtenBody());
+  const sentRecipient = requestBody.documents[0].recipients[0];
+  assert.equal(capturedRequest.options.method, 'POST');
+  assert.equal(capturedRequest.options.path, '/envelope');
+  assert.equal(sentRecipient.recipientId, 'rec_123');
+  assert.equal(sentRecipient.embedded, true);
+  assert.ok(!('email' in sentRecipient));
+  assert.ok(!('name' in sentRecipient));
+});
+
+test('createEmbedLink posts the embed link request and returns the url and expiry', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        url: 'https://document.pdfgate.com/embed/sign/token123',
+        expiresAt: '2026-01-01T00:10:00.000Z',
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.createEmbedLink({
+        id: 'env_123',
+        documentId: 'doc_123',
+        recipientId: 'rec_123',
+        returnUrl: 'https://example.com/done?flow=1',
+      });
+
+      capturedRequest = getRequest();
+      assert.equal(response.url, 'https://document.pdfgate.com/embed/sign/token123');
+      assert.ok(response.expiresAt instanceof Date);
+    }
+  );
+
+  const requestBody = JSON.parse(capturedRequest.writtenBody());
+  assert.equal(capturedRequest.options.method, 'POST');
+  assert.equal(capturedRequest.options.path, '/envelope/env_123/embed-link');
+  assert.deepEqual(requestBody, {
+    documentId: 'doc_123',
+    recipientId: 'rec_123',
+    returnUrl: 'https://example.com/done?flow=1',
+  });
+});
+
+test('createRecipient posts the recipient to the recipient endpoint and returns the typed response', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'rec_123',
+        email: 'anna@example.com',
+        name: 'Anna Smith',
+        metadata: { customerId: 'cus_1' },
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.createRecipient({
+        email: 'anna@example.com',
+        name: 'Anna Smith',
+        metadata: { customerId: 'cus_1' },
+      });
+
+      capturedRequest = getRequest();
+      assert.equal(response.id, 'rec_123');
+      assert.equal(response.email, 'anna@example.com');
+      assert.ok(response.createdAt instanceof Date);
+    }
+  );
+
+  const requestBody = JSON.parse(capturedRequest.writtenBody());
+  assert.equal(capturedRequest.options.method, 'POST');
+  assert.equal(capturedRequest.options.path, '/recipient');
+  assert.deepEqual(requestBody, {
+    email: 'anna@example.com',
+    name: 'Anna Smith',
+    metadata: { customerId: 'cus_1' },
+  });
+});
+
+test('listRecipients sends the email as an encoded query parameter', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        recipients: [
+          {
+            id: 'rec_123',
+            email: 'anna+test@example.com',
+            name: 'Anna Smith',
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.listRecipients({ email: 'anna+test@example.com' });
+
+      capturedRequest = getRequest();
+      assert.equal(response.recipients.length, 1);
+      assert.equal(response.recipients[0].id, 'rec_123');
+    }
+  );
+
+  assert.equal(capturedRequest.options.method, 'GET');
+  assert.equal(capturedRequest.options.path, '/recipients?email=anna%2Btest%40example.com');
+  assert.equal(capturedRequest.writtenBody(), '');
+});
+
+test('getRecipient fetches the recipient by id', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'rec_123',
+        email: 'anna@example.com',
+        name: 'Anna Smith',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.getRecipient({ id: 'rec_123' });
+
+      capturedRequest = getRequest();
+      assert.equal(response.id, 'rec_123');
+      assert.equal(response.name, 'Anna Smith');
+    }
+  );
+
+  assert.equal(capturedRequest.options.method, 'GET');
+  assert.equal(capturedRequest.options.path, '/recipient/rec_123');
+});
+
+test('updateRecipient sends a PATCH with only the name and metadata in the body', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'rec_123',
+        email: 'anna@example.com',
+        name: 'Anna Smith-Jones',
+        metadata: { tier: 'gold' },
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.updateRecipient({
+        id: 'rec_123',
+        name: 'Anna Smith-Jones',
+        metadata: { tier: 'gold' },
+      });
+
+      capturedRequest = getRequest();
+      assert.equal(response.name, 'Anna Smith-Jones');
+      assert.ok(response.updatedAt instanceof Date);
+    }
+  );
+
+  const requestBody = JSON.parse(capturedRequest.writtenBody());
+  assert.equal(capturedRequest.options.method, 'PATCH');
+  assert.equal(capturedRequest.options.path, '/recipient/rec_123');
+  assert.deepEqual(requestBody, { name: 'Anna Smith-Jones', metadata: { tier: 'gold' } });
+});
+
 test('deleteDocument sends a DELETE request to the document endpoint', async () => {
   const client = new PdfGate('test_api_key');
   let capturedRequest = null;

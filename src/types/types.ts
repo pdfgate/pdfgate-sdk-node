@@ -1,5 +1,11 @@
 import { DocumentFieldType, PdfStandardFont, WebhookEventType } from './enums.js';
-import { PdfGateDocument, PdfGateEnvelope, WebhookResponse } from './interfaces.js';
+import {
+  EmbedLinkResponse,
+  PdfGateDocument,
+  PdfGateEnvelope,
+  PdfGateRecipient,
+  WebhookResponse,
+} from './interfaces.js';
 
 /**
  * A file payload sent to multipart endpoints.
@@ -164,11 +170,23 @@ export type ProtectPdfRequest = {
 export type ProtectPdfResponse = PdfGateDocument;
 
 export type EnvelopeRecipient = {
-  email: string;
-  name: string;
+  /**
+   * ID of a stored recipient to reuse. Provide either `recipientId` or
+   * `email` and `name`, never both.
+   */
+  recipientId?: string;
+  /** Required when `recipientId` is not provided. */
+  email?: string;
+  /** Required when `recipientId` is not provided. */
+  name?: string;
   role?: string;
   reminderIntervalDays?: number;
   reminderAttempts?: number;
+  /**
+   * Embedded recipients sign inside your own application through an embed
+   * link and receive no emails from PDFGate.
+   */
+  embedded?: boolean;
 };
 
 export type EnvelopeDocument = {
@@ -218,3 +236,48 @@ export type DeleteEnvelopeParams = {
 };
 
 export type DeleteEnvelopeResponse = void;
+
+export type CreateEmbedLinkParams = {
+  /** The envelope ID. The envelope must be in `in_progress` status. */
+  id: string;
+  /** The envelope document ID (`sourceDocumentId`). */
+  documentId: string;
+  /** The recipient ID of the embedded recipient. */
+  recipientId: string;
+  /** URL the signing session redirects to when it ends. */
+  returnUrl: string;
+};
+
+export type CreateEmbedLinkResponse = EmbedLinkResponse;
+
+export type CreateRecipientParams = {
+  /** Recipient email. Stored lowercased and cannot be changed later. */
+  email: string;
+  name?: string;
+  metadata?: object;
+};
+
+export type CreateRecipientResponse = PdfGateRecipient;
+
+export type ListRecipientsParams = {
+  /** Email to look up (case-insensitive). */
+  email: string;
+};
+
+export type ListRecipientsResponse = {
+  recipients: PdfGateRecipient[];
+};
+
+export type GetRecipientParams = {
+  id: string;
+};
+
+export type GetRecipientResponse = PdfGateRecipient;
+
+export type UpdateRecipientParams = {
+  id: string;
+  name?: string;
+  metadata?: object;
+};
+
+export type UpdateRecipientResponse = PdfGateRecipient;
