@@ -442,6 +442,7 @@ test('createEnvelope forwards recipientId and embedded and surfaces recipientId 
               {
                 recipientId: 'rec_123',
                 email: 'anna@example.com',
+                embedded: true,
                 status: 'pending',
                 fields: [],
               },
@@ -464,6 +465,7 @@ test('createEnvelope forwards recipientId and embedded and surfaces recipientId 
 
       capturedRequest = getRequest();
       assert.equal(response.documents[0].recipients[0].recipientId, 'rec_123');
+      assert.equal(response.documents[0].recipients[0].embedded, true);
     }
   );
 
