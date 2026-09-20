@@ -443,6 +443,8 @@ test('createEnvelope forwards recipientId and embedded and surfaces recipientId 
                 recipientId: 'rec_123',
                 email: 'anna@example.com',
                 embedded: true,
+                signingOrder: 2,
+                activatedAt: '2026-01-01T00:05:00.000Z',
                 status: 'pending',
                 fields: [],
               },
@@ -458,7 +460,7 @@ test('createEnvelope forwards recipientId and embedded and surfaces recipientId 
           {
             sourceDocumentId: 'doc_123',
             name: 'Agreement',
-            recipients: [{ recipientId: 'rec_123', role: 'signer', embedded: true }],
+            recipients: [{ recipientId: 'rec_123', role: 'signer', embedded: true, signingOrder: 2 }],
           },
         ],
       });
@@ -466,6 +468,8 @@ test('createEnvelope forwards recipientId and embedded and surfaces recipientId 
       capturedRequest = getRequest();
       assert.equal(response.documents[0].recipients[0].recipientId, 'rec_123');
       assert.equal(response.documents[0].recipients[0].embedded, true);
+      assert.equal(response.documents[0].recipients[0].signingOrder, 2);
+      assert.ok(response.documents[0].recipients[0].activatedAt instanceof Date);
     }
   );
 
@@ -475,6 +479,7 @@ test('createEnvelope forwards recipientId and embedded and surfaces recipientId 
   assert.equal(capturedRequest.options.path, '/envelope');
   assert.equal(sentRecipient.recipientId, 'rec_123');
   assert.equal(sentRecipient.embedded, true);
+  assert.equal(sentRecipient.signingOrder, 2);
   assert.ok(!('email' in sentRecipient));
   assert.ok(!('name' in sentRecipient));
 });

@@ -393,6 +393,7 @@ export default class PdfGate {
    * Each recipient is given either as `email` and `name` or as the
    * `recipientId` of a stored recipient. Recipients marked `embedded` sign
    * inside your application via {@link createEmbedLink} and receive no emails.
+   * Use `signingOrder` to make recipients sign in sequence.
    *
    * The SDK forwards the payload as-is, preserving the API's camelCase wire format,
    * and returns the envelope JSON response.
@@ -413,7 +414,9 @@ export default class PdfGate {
    *
    * This triggers PDFGate's recipient emails, secure signing links, and OTP verification flow.
    * Embedded recipients receive no email; create their signing links with
-   * {@link createEmbedLink} after sending.
+   * {@link createEmbedLink} after sending. On documents with a `signingOrder`
+   * only the first recipients are emailed; later recipients are activated as
+   * earlier ones sign.
    *
    * @see https://pdfgate.com/documentation
    *
@@ -489,7 +492,10 @@ export default class PdfGate {
    *
    * Render the returned URL in an iframe inside your application. The envelope
    * must be in `in_progress` status and the link expires after 10 minutes, so
-   * create it when the signer is ready (one link per signing session). When the
+   * create it when the signer is ready (one link per signing session). On
+   * documents with a `signingOrder` the link can only be created once it is
+   * the recipient's turn; the `envelope.recipient.activated` webhook event
+   * signals that moment. When the
    * session ends the iframe redirects to `returnUrl` with `event`
    * (`signing_complete`, `voided`, `expired` or `not_found`), `envelopeId`,
    * `documentId` and `recipientId` appended as query parameters; existing

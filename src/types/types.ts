@@ -183,6 +183,14 @@ export type EnvelopeRecipient = {
   reminderIntervalDays?: number;
   reminderAttempts?: number;
   /**
+   * Signing order of the recipient, starting from 1. Recipients sign one
+   * after another in this order and a recipient is activated once everyone
+   * with a lower value has signed. Recipients with the same value can sign
+   * in parallel. Provide it for every recipient of a document or for none.
+   * Omitted, all recipients can sign immediately.
+   */
+  signingOrder?: number;
+  /**
    * Embedded recipients sign inside your own application through an embed
    * link and receive no emails from PDFGate.
    */
