@@ -81,7 +81,7 @@ const embeddedEnvelopePromise: Promise<PdfGateEnvelope> = client.createEnvelope(
     {
       sourceDocumentId: 'doc_1',
       name: 'Agreement',
-      recipients: [{ recipientId: 'rec_1', role: 'signer', embedded: true }],
+      recipients: [{ recipientId: 'rec_1', role: 'signer', embedded: true, signingOrder: 2 }],
     },
   ],
 });

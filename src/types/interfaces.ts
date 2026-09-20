@@ -92,6 +92,10 @@ export interface EnvelopeRecipientResponse {
   email: string;
   /** Whether the recipient signs through embedded signing. Embedded recipients receive no emails and have no signingLink. */
   embedded: boolean;
+  /** Signing order of the recipient. Absent on envelopes created without a signing order. */
+  signingOrder?: number;
+  /** The time it became the recipient's turn to sign. Absent until the recipient is activated. */
+  activatedAt?: Date;
   status: DocumentRecipientStatus;
   signedAt?: Date;
   viewedAt?: Date;

@@ -59,6 +59,7 @@ export enum WebhookEventType {
   ENVELOPE_VOIDED = 'envelope.voided',
   ENVELOPE_DELETED = 'envelope.deleted',
   ENVELOPE_RECIPIENT_SIGNED = 'envelope.recipient.signed',
+  ENVELOPE_RECIPIENT_ACTIVATED = 'envelope.recipient.activated',
   ENVELOPE_DOCUMENT_COMPLETED = 'envelope.document.completed',
 }
 

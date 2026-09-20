@@ -367,8 +367,15 @@ const envelope = await client.createEnvelope({
           email: 'anna@example.com',
           name: 'Anna Smith',
           role: 'signer',
+          signingOrder: 1,
           reminderIntervalDays: 2,
           reminderAttempts: 3,
+        },
+        {
+          email: 'mark@example.com',
+          name: 'Mark Jones',
+          role: 'countersigner',
+          signingOrder: 2,
         },
       ],
     },
@@ -385,6 +392,10 @@ Recipient reminder settings are optional:
 
 - `reminderIntervalDays` controls how many days PDFGate waits between reminder emails.
 - `reminderAttempts` controls how many reminders should be sent to the recipient (min 1, max 10, defaults to 5).
+
+Signing order is optional:
+
+- `signingOrder` makes recipients sign in sequence, starting from 1. Recipients sign one after another in this order and a recipient is activated once everyone with a lower value has signed. Recipients with the same value can sign in parallel. Provide it for every recipient of a document or for none. Omitted, all recipients can sign immediately. The `envelope.recipient.activated` webhook event fires when it becomes a recipient's turn.
 
 Envelope expiration is optional:
 
