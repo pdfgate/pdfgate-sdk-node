@@ -654,6 +654,169 @@ test('updateRecipient sends a PATCH with only the name and metadata in the body'
   assert.deepEqual(requestBody, { name: 'Anna Smith-Jones', metadata: { tier: 'gold' } });
 });
 
+test('deleteRecipient sends a DELETE request to the recipient endpoint', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse({ statusCode: 204, headers: {}, body: '' }, async (getRequest) => {
+    const response = await client.deleteRecipient({ id: 'rec_123' });
+    capturedRequest = getRequest();
+    assert.equal(response, undefined);
+  });
+
+  assert.equal(capturedRequest.options.method, 'DELETE');
+  assert.equal(capturedRequest.options.path, '/recipient/rec_123');
+  assert.equal(capturedRequest.writtenBody(), '');
+});
+
+test('requestRecipientSignature posts to the signature request endpoint and returns the pending signature', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      statusCode: 201,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'rec_123',
+        email: 'anna@example.com',
+        name: 'Anna Smith',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        signature: { status: 'pending', requestedAt: '2026-01-03T00:00:00.000Z', useCount: 0 },
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.requestRecipientSignature({ id: 'rec_123' });
+
+      capturedRequest = getRequest();
+      assert.equal(response.id, 'rec_123');
+      assert.equal(response.signature.status, 'pending');
+      assert.equal(response.signature.useCount, 0);
+      assert.ok(response.signature.requestedAt instanceof Date);
+    }
+  );
+
+  assert.equal(capturedRequest.options.method, 'POST');
+  assert.equal(capturedRequest.options.path, '/recipient/rec_123/signature/request');
+  assert.equal(capturedRequest.writtenBody(), '');
+});
+
+test('getRecipient surfaces an active stored signature with its image', async () => {
+  const client = new PdfGate('test_api_key');
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'rec_123',
+        email: 'anna@example.com',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        signature: {
+          status: 'active',
+          requestedAt: '2026-01-03T00:00:00.000Z',
+          adoptionMethod: 'type_signature',
+          enrolledAt: '2026-01-04T00:00:00.000Z',
+          lastUsedAt: '2026-01-05T00:00:00.000Z',
+          useCount: 2,
+          image: 'data:image/png;base64,AAAA',
+        },
+      }),
+    },
+    async () => {
+      const response = await client.getRecipient({ id: 'rec_123' });
+
+      assert.equal(response.signature.status, 'active');
+      assert.equal(response.signature.adoptionMethod, 'type_signature');
+      assert.ok(response.signature.enrolledAt instanceof Date);
+      assert.ok(response.signature.lastUsedAt instanceof Date);
+      assert.equal(response.signature.useCount, 2);
+      assert.equal(response.signature.image, 'data:image/png;base64,AAAA');
+    }
+  );
+});
+
+test('removeRecipientSignature sends a DELETE to the signature endpoint and returns the recipient', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'rec_123',
+        email: 'anna@example.com',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        signature: { status: 'revoked', revokedAt: '2026-01-06T00:00:00.000Z', useCount: 2 },
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.removeRecipientSignature({ id: 'rec_123' });
+
+      capturedRequest = getRequest();
+      assert.equal(response.signature.status, 'revoked');
+      assert.ok(response.signature.revokedAt instanceof Date);
+      assert.equal(response.signature.image, undefined);
+    }
+  );
+
+  assert.equal(capturedRequest.options.method, 'DELETE');
+  assert.equal(capturedRequest.options.path, '/recipient/rec_123/signature');
+  assert.equal(capturedRequest.writtenBody(), '');
+});
+
+test('createEnvelope forwards autoSign and sendSignedCopy and surfaces them in the response', async () => {
+  const client = new PdfGate('test_api_key');
+  let capturedRequest = null;
+
+  await withMockedHttpsResponse(
+    {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'env_123',
+        status: 'created',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        documents: [
+          {
+            sourceDocumentId: 'doc_123',
+            status: 'pending',
+            recipients: [
+              {
+                recipientId: 'rec_123',
+                email: 'ceo@example.com',
+                embedded: false,
+                autoSign: true,
+                sendSignedCopy: false,
+                status: 'pending',
+                fields: [],
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    async (getRequest) => {
+      const response = await client.createEnvelope({
+        requesterName: 'HR',
+        documents: [
+          {
+            sourceDocumentId: 'doc_123',
+            name: 'Contract',
+            recipients: [{ recipientId: 'rec_123', role: 'ceo', autoSign: true, sendSignedCopy: false }],
+          },
+        ],
+      });
+
+      capturedRequest = getRequest();
+      assert.equal(response.documents[0].recipients[0].autoSign, true);
+      assert.equal(response.documents[0].recipients[0].sendSignedCopy, false);
+    }
+  );
+
+  const sentRecipient = JSON.parse(capturedRequest.writtenBody()).documents[0].recipients[0];
+  assert.equal(sentRecipient.autoSign, true);
+  assert.equal(sentRecipient.sendSignedCopy, false);
+});
+
 test('deleteDocument sends a DELETE request to the document endpoint', async () => {
   const client = new PdfGate('test_api_key');
   let capturedRequest = null;

@@ -48,6 +48,12 @@ import {
   SendEnvelopeResponse,
   UpdateRecipientParams,
   UpdateRecipientResponse,
+  DeleteRecipientParams,
+  DeleteRecipientResponse,
+  RequestRecipientSignatureParams,
+  RequestRecipientSignatureResponse,
+  RemoveRecipientSignatureParams,
+  RemoveRecipientSignatureResponse,
   UploadFileRequest,
   UploadFileResponse,
   WatermarkPdfRequest,
@@ -92,11 +98,18 @@ export type {
   SendEnvelopeResponse,
   UpdateRecipientParams,
   UpdateRecipientResponse,
+  DeleteRecipientParams,
+  DeleteRecipientResponse,
+  RequestRecipientSignatureParams,
+  RequestRecipientSignatureResponse,
+  RemoveRecipientSignatureParams,
+  RemoveRecipientSignatureResponse,
 } from './types/types.js';
 
 export type {
   PdfGateEnvelope,
   PdfGateRecipient,
+  RecipientStoredSignature,
   EmbedLinkResponse,
   EnvelopeDocumentResponse,
   EnvelopeRecipientResponse,
@@ -113,6 +126,8 @@ export {
   EnvelopeStatus,
   EnvelopeDocumentStatus,
   DocumentRecipientStatus,
+  StoredSignatureStatus,
+  SignatureAdoptionMethod,
   DocumentFieldType,
   PageSizeType,
   FileOrientation,
@@ -462,7 +477,7 @@ export default class PdfGate {
   async voidEnvelope(params: VoidEnvelopeParams): Promise<VoidEnvelopeResponse> {
     return this.api.post<PdfGateEnvelope>(
       `/envelope/${params.id}/void`,
-      params.reason ? { reason: params.reason } : {},
+      params.reason ? { reason: params.reason } : {}
     );
   }
 
@@ -546,7 +561,7 @@ export default class PdfGate {
    */
   listRecipients(params: ListRecipientsParams): Promise<ListRecipientsResponse> {
     return this.api.get<ListRecipientsResponse>(
-      `/recipients?email=${encodeURIComponent(params.email)}`,
+      `/recipients?email=${encodeURIComponent(params.email)}`
     );
   }
 
@@ -582,6 +597,70 @@ export default class PdfGate {
   async updateRecipient(params: UpdateRecipientParams): Promise<UpdateRecipientResponse> {
     const { id, ...body } = params;
     return this.api.patch<PdfGateRecipient>(`/recipient/${id}`, body);
+  }
+
+  /**
+   * Delete a stored recipient.
+   *
+   * **Endpoint:** `DELETE /recipient/{id}`
+   *
+   * The record is kept with its personal data removed, so later reads return
+   * 404 and a new envelope to the same address creates a fresh recipient.
+   * Envelopes already sent are not affected. A recipient with an active
+   * stored signature or a pending enrolment cannot be deleted: call
+   * {@link removeRecipientSignature} first.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The recipient ID.
+   */
+  async deleteRecipient(params: DeleteRecipientParams): Promise<DeleteRecipientResponse> {
+    await this.api.delete<void>(`/recipient/${params.id}`);
+  }
+
+  /**
+   * Automatic signing: email the recipient a link to store a reusable signature.
+   *
+   * **Endpoint:** `POST /recipient/{id}/signature/request`
+   *
+   * The recipient verifies their email with a one-time code, accepts the
+   * authorization text and types, draws or uploads their signature. The link
+   * is valid for 7 days; calling this again replaces a pending request. Once
+   * the enrolment is complete the `recipient.signature.enrolled` webhook
+   * fires and envelopes can set `autoSign` on this recipient. Rejected when
+   * the recipient has no email or already has an active stored signature.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The recipient ID.
+   * @returns The `PdfGateRecipient` with `signature.status` set to `pending`.
+   */
+  requestRecipientSignature(
+    params: RequestRecipientSignatureParams
+  ): Promise<RequestRecipientSignatureResponse> {
+    return this.api.post<PdfGateRecipient>(`/recipient/${params.id}/signature/request`);
+  }
+
+  /**
+   * Automatic signing: remove the stored signature of a recipient, or cancel
+   * a pending enrolment.
+   *
+   * **Endpoint:** `DELETE /recipient/{id}/signature`
+   *
+   * Envelopes already waiting on an automatic signature fall back to a
+   * signing link emailed to the recipient. Removing an active signature
+   * fires the `recipient.signature.revoked` webhook. Idempotent: a recipient
+   * without a stored signature is returned unchanged.
+   *
+   * @see https://pdfgate.com/documentation
+   *
+   * @param params.id - The recipient ID.
+   * @returns The `PdfGateRecipient`.
+   */
+  removeRecipientSignature(
+    params: RemoveRecipientSignatureParams
+  ): Promise<RemoveRecipientSignatureResponse> {
+    return this.api.delete<PdfGateRecipient>(`/recipient/${params.id}/signature`);
   }
 
   /**

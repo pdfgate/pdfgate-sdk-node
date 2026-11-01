@@ -397,6 +397,11 @@ Signing order is optional:
 
 - `signingOrder` makes recipients sign in sequence, starting from 1. Recipients sign one after another in this order and a recipient is activated once everyone with a lower value has signed. Recipients with the same value can sign in parallel. Provide it for every recipient of a document or for none. Omitted, all recipients can sign immediately. The `envelope.recipient.activated` webhook event fires when it becomes a recipient's turn.
 
+Automatic signing is optional:
+
+- `autoSign` applies the stored signature of the referenced recipient on their behalf when their turn to sign comes, with no signing session or email. Requires `recipientId` pointing to a recipient with an active stored signature (see [Automatic signing](#automatic-signing)) and cannot be combined with `embedded`. Every required field of the recipient must already have a value before the document is sent, except signature and auto-filled date fields.
+- `sendSignedCopy` controls whether the recipient is emailed the signed document when the document completes. Defaults to `true` for recipients who sign through the emailed signing link and `false` for embedded and automatic signing recipients.
+
 Envelope expiration is optional:
 
 - `expiresInDays` controls how many days until the envelope and its signing links expire, counted from creation (min 1, max 90). Defaults to the account's envelope expiration setting.
@@ -515,6 +520,12 @@ const updated = await client.updateRecipient({
 The recipient email cannot be changed after creation. Updating a recipient does not affect existing envelopes; they keep the recipient name they were created with.
 
 ```ts
+await client.deleteRecipient({ id: recipient.id });
+```
+
+Deleting a recipient removes its personal data from the directory; envelopes already sent are not affected. A recipient with an active stored signature or a pending enrolment cannot be deleted until the signature is removed.
+
+```ts
 const envelope = await client.createEnvelope({
   requesterName: 'John Doe',
   documents: [
@@ -526,6 +537,43 @@ const envelope = await client.createEnvelope({
   ],
 });
 ```
+
+---
+
+### Automatic signing
+
+A recipient can store a reusable signature once, and later envelopes apply it on their behalf with no signing session. Request the enrolment, and PDFGate emails the recipient a link where they verify their email with a one-time code, accept the authorization text and type, draw or upload their signature. The link is valid for 7 days.
+
+```ts
+const pending = await client.requestRecipientSignature({ id: recipient.id });
+console.log(pending.signature.status); // "pending"
+
+// Once the recipient completes the enrolment (webhook event
+// `recipient.signature.enrolled`), the signature is active.
+const enrolled = await client.getRecipient({ id: recipient.id });
+console.log(enrolled.signature.status, enrolled.signature.image); // "active", PNG data URL
+
+// Sign automatically: the recipient is signed at send, or when their turn
+// in the signing order comes. No signing email is sent.
+const envelope = await client.createEnvelope({
+  requesterName: 'HR',
+  documents: [
+    {
+      sourceDocumentId: 'DOCUMENT_ID',
+      name: 'Employment Agreement',
+      recipients: [
+        { email: 'anna@example.com', name: 'Anna Smith', role: 'employee', signingOrder: 1 },
+        { recipientId: recipient.id, role: 'ceo', signingOrder: 2, autoSign: true },
+      ],
+    },
+  ],
+});
+
+// Remove the stored signature or cancel a pending enrolment.
+await client.removeRecipientSignature({ id: recipient.id });
+```
+
+The `signature` object on a recipient carries `status` (`pending`, `active` or `revoked`), `requestedAt`, `adoptionMethod`, `enrolledAt`, `revokedAt`, `lastUsedAt` and `useCount`. The `image` is returned by `getRecipient` only while the signature is active. Removing an active signature fires the `recipient.signature.revoked` webhook event, and envelopes already waiting on it fall back to a signing link emailed to the recipient. The audit log records every automatic signature with the enrolment details.
 
 ---
 
@@ -553,7 +601,7 @@ console.log(fetched.status);
 await client.deleteWebhook({ id: webhook.id });
 ```
 
-The subscribable events are exposed via the `WebhookEventType` enum: `ENVELOPE_SENT`, `ENVELOPE_COMPLETED`, `ENVELOPE_EXPIRED`, and `ENVELOPE_DOCUMENT_COMPLETED`. The webhook URL must be publicly accessible (localhost is not supported).
+The subscribable events are exposed via the `WebhookEventType` enum: `ENVELOPE_SENT`, `ENVELOPE_COMPLETED`, `ENVELOPE_EXPIRED`, `ENVELOPE_VOIDED`, `ENVELOPE_DELETED`, `ENVELOPE_RECIPIENT_SIGNED`, `ENVELOPE_RECIPIENT_ACTIVATED`, `ENVELOPE_DOCUMENT_COMPLETED`, `RECIPIENT_SIGNATURE_ENROLLED` and `RECIPIENT_SIGNATURE_REVOKED`. The webhook URL must be publicly accessible (localhost is not supported).
 
 ---
 

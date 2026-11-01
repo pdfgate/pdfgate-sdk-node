@@ -61,6 +61,31 @@ export enum WebhookEventType {
   ENVELOPE_RECIPIENT_SIGNED = 'envelope.recipient.signed',
   ENVELOPE_RECIPIENT_ACTIVATED = 'envelope.recipient.activated',
   ENVELOPE_DOCUMENT_COMPLETED = 'envelope.document.completed',
+  /** A recipient completed the enrolment of a stored signature (automatic signing). */
+  RECIPIENT_SIGNATURE_ENROLLED = 'recipient.signature.enrolled',
+  /** An active stored signature was removed from a recipient. */
+  RECIPIENT_SIGNATURE_REVOKED = 'recipient.signature.revoked',
+}
+
+/**
+ * State of a recipient's stored signature (automatic signing).
+ */
+export enum StoredSignatureStatus {
+  /** The enrolment link was sent but the recipient has not completed it. */
+  PENDING = 'pending',
+  /** The signature can be applied to documents. */
+  ACTIVE = 'active',
+  /** The signature was removed. */
+  REVOKED = 'revoked',
+}
+
+/**
+ * How a recipient created their stored signature.
+ */
+export enum SignatureAdoptionMethod {
+  TYPE_SIGNATURE = 'type_signature',
+  DRAW_SIGNATURE = 'draw_signature',
+  UPLOAD_SIGNATURE = 'upload_signature',
 }
 
 export enum DocumentFieldType {
