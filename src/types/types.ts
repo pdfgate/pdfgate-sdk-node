@@ -195,6 +195,21 @@ export type EnvelopeRecipient = {
    * link and receive no emails from PDFGate.
    */
   embedded?: boolean;
+  /**
+   * Automatic signing. The stored signature of the referenced recipient is
+   * applied on their behalf when their turn to sign comes, with no signing
+   * session or email. Requires `recipientId` pointing to a recipient with an
+   * active stored signature and cannot be combined with `embedded`. Every
+   * required field of the recipient must already have a value before the
+   * document is sent, except signature and auto-filled date fields.
+   */
+  autoSign?: boolean;
+  /**
+   * Whether to email this recipient the signed document when the document
+   * completes. Defaults to `true` for recipients who sign through the emailed
+   * signing link and `false` for embedded and automatic signing recipients.
+   */
+  sendSignedCopy?: boolean;
 };
 
 export type EnvelopeDocument = {
@@ -289,3 +304,21 @@ export type UpdateRecipientParams = {
 };
 
 export type UpdateRecipientResponse = PdfGateRecipient;
+
+export type DeleteRecipientParams = {
+  id: string;
+};
+
+export type DeleteRecipientResponse = void;
+
+export type RequestRecipientSignatureParams = {
+  id: string;
+};
+
+export type RequestRecipientSignatureResponse = PdfGateRecipient;
+
+export type RemoveRecipientSignatureParams = {
+  id: string;
+};
+
+export type RemoveRecipientSignatureResponse = PdfGateRecipient;

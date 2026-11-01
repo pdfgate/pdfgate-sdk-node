@@ -104,6 +104,22 @@ const updateRecipientPromise: Promise<PdfGateRecipient> = client.updateRecipient
   id: 'rec_1',
   name: 'Anna Smith-Jones',
 });
+const deleteRecipientPromise: Promise<void> = client.deleteRecipient({ id: 'rec_1' });
+const requestRecipientSignaturePromise: Promise<PdfGateRecipient> =
+  client.requestRecipientSignature({ id: 'rec_1' });
+const removeRecipientSignaturePromise: Promise<PdfGateRecipient> = client.removeRecipientSignature({
+  id: 'rec_1',
+});
+const autoSignEnvelopePromise: Promise<PdfGateEnvelope> = client.createEnvelope({
+  requesterName: 'HR',
+  documents: [
+    {
+      sourceDocumentId: 'doc_1',
+      name: 'Agreement',
+      recipients: [{ recipientId: 'rec_1', role: 'ceo', autoSign: true, sendSignedCopy: false }],
+    },
+  ],
+});
 
 void generatePromise;
 void flattenPromise;
@@ -123,6 +139,10 @@ void embeddedEnvelopePromise;
 void createEmbedLinkPromise;
 void createRecipientPromise;
 void listRecipientsPromise;
+void deleteRecipientPromise;
+void requestRecipientSignaturePromise;
+void removeRecipientSignaturePromise;
+void autoSignEnvelopePromise;
 void getRecipientPromise;
 void updateRecipientPromise;
 // @ts-expect-error updateRecipient must not accept an email (it is immutable).

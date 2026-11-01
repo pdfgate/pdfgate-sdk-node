@@ -52,6 +52,56 @@ if (requireAcceptanceApiKey('recipient acceptance tests require PDFGATE_API_KEY'
     assert.deepEqual(updated.metadata, { source: 'node-sdk-acceptance', updated: 'yes' });
   });
 
+  test('requestRecipientSignature emails the enrolment link and returns a pending signature', async () => {
+    const pending = await client.requestRecipientSignature({ id: recipient.id });
+
+    assert.equal(pending.id, recipient.id);
+    assert.equal(pending.signature.status, 'pending');
+    assert.ok(pending.signature.requestedAt instanceof Date);
+    assert.equal(pending.signature.useCount, 0);
+    assert.equal(pending.signature.image, undefined);
+  });
+
+  test('deleteRecipient is refused while an enrolment is pending', async () => {
+    await assert.rejects(
+      async () => {
+        await client.deleteRecipient({ id: recipient.id });
+      },
+      (error) => {
+        assertApiError(error);
+        assert.equal(error.statusCode, 400);
+        return true;
+      }
+    );
+  });
+
+  test('removeRecipientSignature cancels the pending enrolment', async () => {
+    const removed = await client.removeRecipientSignature({ id: recipient.id });
+
+    assert.equal(removed.id, recipient.id);
+    assert.equal(removed.signature.status, 'revoked');
+    assert.ok(removed.signature.revokedAt instanceof Date);
+  });
+
+  test('deleteRecipient removes the recipient so later reads return 404', async () => {
+    const response = await client.deleteRecipient({ id: recipient.id });
+    assert.equal(response, undefined);
+
+    await assert.rejects(
+      async () => {
+        await client.getRecipient({ id: recipient.id });
+      },
+      (error) => {
+        assertApiError(error);
+        assert.equal(error.statusCode, 404);
+        return true;
+      }
+    );
+
+    const { recipients } = await client.listRecipients({ email });
+    assert.equal(recipients.length, 0);
+  });
+
   test('getRecipient returns 404 for an unknown recipient', async () => {
     await assert.rejects(
       async () => {

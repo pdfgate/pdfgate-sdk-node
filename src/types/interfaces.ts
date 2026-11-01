@@ -8,6 +8,8 @@ import {
   EnvelopeStatus,
   EmulateMediaType,
   FileOrientation,
+  SignatureAdoptionMethod,
+  StoredSignatureStatus,
   WebhookEventType,
   WebhookStatus,
 } from './enums.js';
@@ -94,6 +96,10 @@ export interface EnvelopeRecipientResponse {
   embedded: boolean;
   /** Signing order of the recipient. Absent on envelopes created without a signing order. */
   signingOrder?: number;
+  /** Whether the recipient is signed automatically with their stored signature. */
+  autoSign: boolean;
+  /** Whether the recipient is emailed the signed document when the document completes. */
+  sendSignedCopy: boolean;
   /** The time it became the recipient's turn to sign. Absent until the recipient is activated. */
   activatedAt?: Date;
   status: DocumentRecipientStatus;
@@ -136,6 +142,36 @@ export interface PdfGateRecipient {
   updatedAt?: Date;
   /** Last time the recipient was referenced by an envelope. */
   lastUsedAt?: Date;
+  /**
+   * Automatic signing. The stored signature of the recipient or the state of
+   * its enrolment. Absent until an enrolment was requested.
+   */
+  signature?: RecipientStoredSignature;
+}
+
+/**
+ * Automatic signing. The reusable signature a recipient stored through the
+ * enrolment link, or the state of the enrolment.
+ */
+export interface RecipientStoredSignature {
+  status: StoredSignatureStatus;
+  /** When the enrolment link was last sent. */
+  requestedAt?: Date;
+  /** How the recipient created the signature. */
+  adoptionMethod?: SignatureAdoptionMethod;
+  /** When the recipient completed the enrolment. */
+  enrolledAt?: Date;
+  /** When the signature was removed. */
+  revokedAt?: Date;
+  /** When the signature was last applied to a document. */
+  lastUsedAt?: Date;
+  /** How many documents the signature was applied to. */
+  useCount: number;
+  /**
+   * The signature as a PNG data URL. Returned only by `getRecipient` while
+   * the signature is active.
+   */
+  image?: string;
 }
 
 export interface EmbedLinkResponse {
